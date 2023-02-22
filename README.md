@@ -23,6 +23,10 @@ clone the git repo into local directory
 git clone https://github.com/WWXKenmo/NetID_package.git
 cd NetID_package
 ```
+install RaceID dependent packages
+```
+install.packages(c('coop', 'FateID', 'FNN', 'fpc', 'ggplot2', 'harmony', 'ica', 'igraph', 'irlba', 'leiden', 'locfit', 'matrixStats', 'pheatmap', 'princurve', 'quadprog', 'randomForest', 'runner', 'RColorBrewer', 'Rtsne', 'umap', 'vegan'))
+```
 Then install RaceID in R
 ```
 install.packages("RaceID_0.2.9.tar.gz",repos=NULL, type="source",INSTALL_opts=c("--no-multiarch"))
