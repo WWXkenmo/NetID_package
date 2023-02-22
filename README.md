@@ -18,6 +18,12 @@ mamba install -c bioconda -c conda-forge cellrank-krylov
 ```
 
 ### Install RaceID package
+clone the git repo into local directory
+```
+git clone https://github.com/WWXKenmo/NetID_package.git
+cd NetID_package
+```
+Then install RaceID in R
 ```
 install.packages("RaceID_0.2.9.tar.gz",repos=NULL, type="source",INSTALL_opts=c("--no-multiarch"))
 ```
@@ -25,4 +31,8 @@ install.packages("RaceID_0.2.9.tar.gz",repos=NULL, type="source",INSTALL_opts=c(
 ### Install NetID package in R
 ```
 install_github("WWXKenmo/NetID_package")
+```
+or
+```
+install.packages("NetID_0.1.0.tar.gz",repos=NULL, type="source",INSTALL_opts=c("--no-multiarch"))
 ```
