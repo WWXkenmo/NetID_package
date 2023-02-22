@@ -16,6 +16,10 @@ mamba install -c bioconda -c conda-forge cellrank-krylov
 mamba install -c r r-devtools
 mamba install -c r r-fateid
 ```
+reinstall the numpy
+```
+pip install numpy==1.23.5
+```
 finally, install palantir and geosketch package
 ```
 pip install palantir
