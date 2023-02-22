@@ -120,7 +120,7 @@
 #'
 #' @param ndim
 #' dimensions of PCs, used by geosketch method, Default: 30
-#' 
+#'
 #' @param n_cell
 #' the number of sampled cells, default: 500
 #'
@@ -129,10 +129,10 @@
 #'
 #' @param normalize
 #' if perform normalization to the count matrix, default: FALSE
-#' 
+#'
 #' @param prior_net
 #' if a binary matrix indicate the prior knowledge of gene regulation, row is the regulator, column is the target.
-#' 
+#'
 #' @export
 #'
 RunNetID <- function(sce,min_counts = 10,varID_res=NULL, knn = 30, regulators = NULL, targets = NULL,netID_params = list(), velo=TRUE,dynamicInfer=TRUE,maxState = 5,cut_off = 2,work_dir = NULL){
@@ -374,71 +374,71 @@ RunNetID2 <- function(spliced, varID_obj,var=FALSE, sampled_cells=NULL,sketch.me
 }
 
 LineageClassifer <- function(fate_prob,cut_off=2,maxState = 5, diffvar=TRUE, unique_assign = FALSE){
-    sampleID <- rownames(fate_prob)
-	cellfate <- colnames(fate_prob)
-	#fate_prob <- fate_prob %*% diag(1/colMeans(fate_prob))
-	#fate_prob <- diag(1/rowSums(fate_prob)) %*% fate_prob
-	rownames(fate_prob) <- sampleID
-	colnames(fate_prob) <- cellfate
-	fateprob.v <- log2(1.000001+ fate_prob / (1.000001 - fate_prob))
-	if(diffvar == TRUE){
-		## default assumes different variance for clusters
-		mcl.o <- Mclust(fateprob.v, G = maxState)
-	}
-	else {
-		mcl.o <- Mclust(fateprob.v, G = maxState, modelNames = c("E"))
-	}
-	mu.v <- mcl.o$param$mean
+  sampleID <- rownames(fate_prob)
+  cellfate <- colnames(fate_prob)
+  #fate_prob <- fate_prob %*% diag(1/colMeans(fate_prob))
+  #fate_prob <- diag(1/rowSums(fate_prob)) %*% fate_prob
+  rownames(fate_prob) <- sampleID
+  colnames(fate_prob) <- cellfate
+  fateprob.v <- log2(1.000001+ fate_prob / (1.000001 - fate_prob))
+  if(diffvar == TRUE){
+    ## default assumes different variance for clusters
+    mcl.o <- Mclust(fateprob.v, G = maxState)
+  }
+  else {
+    mcl.o <- Mclust(fateprob.v, G = maxState, modelNames = c("E"))
+  }
+  mu.v <- mcl.o$param$mean
+  for(i in 1:nrow(mu.v)){
+    if(nrow(mu.v) == 2){
+      mu.v[i,] <- mu.v[i,] / mcl.o$param$mean[-i,]
+    }else{
+      mu.v[i,] <- mu.v[i,] / colMeans(mcl.o$param$mean[-i,])
+    }
+  }
+  colnames(mu.v) <- paste0("cluster",1:ncol(mu.v))
+  class <- mcl.o$classification
+  class <- paste0("cluster",class)
+  print(mu.v)
+  if(unique_assign){
+    writeLines("Unique assign cell state into a specific lineage...")
+    label <- NULL
+    for(i in 1:ncol(mu.v)){
+      if(max(mu.v[,i])>cut_off){
+        label <- c(label, rownames(mu.v)[which.max(mu.v[,i])])
+      }else{
+        label <- c(label,"uncertain")
+      }
+    }
+    lineage_list <- list()
+    drop_fate <- NULL
     for(i in 1:nrow(mu.v)){
-		if(nrow(mu.v) == 2){
-		  mu.v[i,] <- mu.v[i,] / mcl.o$param$mean[-i,]
-		}else{
-		  mu.v[i,] <- mu.v[i,] / colMeans(mcl.o$param$mean[-i,])
-		}
-	}
-	colnames(mu.v) <- paste0("cluster",1:ncol(mu.v))
-	class <- mcl.o$classification
-	class <- paste0("cluster",class)
-	print(mu.v)
-	if(unique_assign){
-	writeLines("Unique assign cell state into a specific lineage...")
-	label <- NULL
-	for(i in 1:ncol(mu.v)){
-	  if(max(mu.v[,i])>cut_off){
-	     label <- c(label, rownames(mu.v)[which.max(mu.v[,i])])
-	  }else{
-	    label <- c(label,"uncertain")
-	  }
-	}
-	lineage_list <- list()
-	drop_fate <- NULL
-	for(i in 1:nrow(mu.v)){
-	  lineage_list[[i]] <- colnames(mu.v)[which(label %in% c("uncertain",rownames(mu.v)[i]))]
-	  lineage_list[[i]] <- rownames(fate_prob)[which(class %in% lineage_list[[i]])]
-	  if(length(lineage_list[[i]])==0) drop_fate <- c(drop_fate,i)
-	}
-	names(lineage_list) <- rownames(mu.v)
-	if(!is.null(drop_fate))lineage_list <- lineage_list[-drop_fate]
-	}else{
-	writeLines("Allow shared cell state between different lineage...")
-	label_list <- list()
-	for(i in 1:nrow(mu.v)){
-	  label_list[[i]] <- colnames(mu.v)[which(mu.v[i,]>cut_off)]
-	}
-	uncertain_cellstate <- colnames(mu.v)[colnames(mu.v) %in% unique(unlist(label_list)) == FALSE]
-	for(i in 1:nrow(mu.v)) label_list[[i]] <- c(label_list[[i]],uncertain_cellstate)
+      lineage_list[[i]] <- colnames(mu.v)[which(label %in% c("uncertain",rownames(mu.v)[i]))]
+      lineage_list[[i]] <- rownames(fate_prob)[which(class %in% lineage_list[[i]])]
+      if(length(lineage_list[[i]])==0) drop_fate <- c(drop_fate,i)
+    }
+    names(lineage_list) <- rownames(mu.v)
+    if(!is.null(drop_fate))lineage_list <- lineage_list[-drop_fate]
+  }else{
+    writeLines("Allow shared cell state between different lineage...")
+    label_list <- list()
+    for(i in 1:nrow(mu.v)){
+      label_list[[i]] <- colnames(mu.v)[which(mu.v[i,]>cut_off)]
+    }
+    uncertain_cellstate <- colnames(mu.v)[colnames(mu.v) %in% unique(unlist(label_list)) == FALSE]
+    for(i in 1:nrow(mu.v)) label_list[[i]] <- c(label_list[[i]],uncertain_cellstate)
 
-	lineage_list <- list()
-	drop_fate <- NULL
-	for(i in 1:nrow(mu.v)){
-	  lineage_list[[i]] <- label_list[[i]]
-	  lineage_list[[i]] <- rownames(fate_prob)[which(class %in% lineage_list[[i]])]
-	  if(length(lineage_list[[i]])==0) drop_fate <- c(drop_fate,i)
-	}
-	names(lineage_list) <- rownames(mu.v)
-	if(!is.null(drop_fate))lineage_list <- lineage_list[-drop_fate]
-	}
-	lineage_list
+    lineage_list <- list()
+    drop_fate <- NULL
+    for(i in 1:nrow(mu.v)){
+      lineage_list[[i]] <- label_list[[i]]
+      lineage_list[[i]] <- rownames(fate_prob)[which(class %in% lineage_list[[i]])]
+      if(length(lineage_list[[i]])==0) drop_fate <- c(drop_fate,i)
+    }
+    names(lineage_list) <- rownames(mu.v)
+    if(!is.null(drop_fate))lineage_list <- lineage_list[-drop_fate]
+  }
+  lineage_list
 }
 
 Sketching <- function(exp.m,varID_obj,var,n_cell,sketch.method,ndim){

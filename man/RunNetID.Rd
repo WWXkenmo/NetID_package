@@ -84,12 +84,31 @@ Default: FALSE}
 the velocity matrix}
 
 \item{skeleton}{a gene regulatory network skeleton (a binary matrix with 1 indicate have regulation)}
+
+\item{var}{if using variable gene to calculate principal components, used by geosketch method, default: FALSE}
+
+\item{sampled_cells}{the barcode or ID of sampled cells}
+
+\item{sketch.method}{perform sketching sampling on single cell datasets, "geosketch" or "SeuratSketching"}
+
+\item{ndim}{dimensions of PCs, used by geosketch method, Default: 30}
+
+\item{n_cell}{the number of sampled cells, default: 500}
+
+\item{Threshold_Num}{the minimum nn of each seed cells after assignments, default: 2}
+
+\item{normalize}{if perform normalization to the count matrix, default: FALSE}
+
+\item{prior_net}{if a binary matrix indicate the prior knowledge of gene regulation, row is the regulator, column is the target.}
 }
 \value{
 a list contains following objects
 }
 \description{
 This function is for generating the weighted gene regulatory network (GRN). NetID first sample the cells on the PCA space to make sure the sampled cell could cover the whole manifold. Then aggregate the neighbourhoods around each sampled cells on pruned KNN graph. And in the end run GENIE3 algorithm on the aggregated gene expression profile. The sampling and rational aggregation would make cells denoise and maintain the major variation, and speed up the GRN generating process.
+
+a check function for RunNetID function.
+RunNetID have provided netID_params, user could specific the parameters the want, the parameters are listed as follow
 }
 \examples{
 \dontrun{
