@@ -123,15 +123,17 @@ FateDynamic <- function(sce,global_params = list(),palantir_params = list(),cell
   fate_predict_py = capitalize(tolower(as.character(fate_predict))) 
   plot = capitalize(tolower(as.character(plot))) 
   #if(is.null(cluster_label)) cluster_label = ""
-  commandLines = paste('python FateDynamic_py.py -i ',input,' -m ',min_counts,' -n ',nhvgs,' -pc ',npcs,' -k ', knn, ' -pl ',"True",' -dc ',ndcs,' -r ',start_cell,' -nw ',nwps,' -mo ',mode,' -p ',plot,' -f ',fate_predict_py, ' -c ', cluster_label, ' -w ',weight_connectivities,' -nc ', ncores, ' -t ',tolerance,sep="")
-  reticulate::py_run_file(system.file(commandLines, package = "NetID"))
-  #system(commandLines, wait=TRUE)
+  script = system.file("/python/FateDynamic_py.py", package = "NetID")
+  commandLines = paste('python ',script,' -i ',input,' -m ',min_counts,' -n ',nhvgs,' -pc ',npcs,' -k ', knn, ' -pl ',"True",' -dc ',ndcs,' -r ',start_cell,' -nw ',nwps,' -mo ',mode,' -p ',plot,' -f ',fate_predict_py, ' -c ', cluster_label, ' -w ',weight_connectivities,' -nc ', ncores, ' -t ',tolerance,sep="")
+  #reticulate::py_run_file(system.file(commandLines, package = "NetID"))
+  system(commandLines, wait=TRUE)
   
   if(velo){
   writeLines(paste("Using cellrank with ",mode," mode velocity to perform cell fate analysis...",sep=""))
-  commandLines = paste('python FateDynamic_py.py -i ',input,' -m ',min_counts,' -n ',nhvgs,' -pc ',npcs,' -k ', knn, ' -pl ',"False",' -dc ',ndcs,' -r ',start_cell,' -nw ',nwps,' -mo ',mode,' -p ',plot,' -f ',fate_predict_py, ' -c ', cluster_label, ' -w ',weight_connectivities,' -nc ', ncores, ' -t ',tolerance,sep="")
-  reticulate::py_run_file(system.file(commandLines, package = "NetID"))
-  #system(commandLines, wait=TRUE)
+  script = system.file("/python/FateDynamic_py.py", package = "NetID")
+  commandLines = paste('python ',script,' -i ',input,' -m ',min_counts,' -n ',nhvgs,' -pc ',npcs,' -k ', knn, ' -pl ',"False",' -dc ',ndcs,' -r ',start_cell,' -nw ',nwps,' -mo ',mode,' -p ',plot,' -f ',fate_predict_py, ' -c ', cluster_label, ' -w ',weight_connectivities,' -nc ', ncores, ' -t ',tolerance,sep="")
+  #reticulate::py_run_file(system.file(commandLines, package = "NetID"))
+  system(commandLines, wait=TRUE)
   }
 }
 
