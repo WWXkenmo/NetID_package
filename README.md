@@ -19,5 +19,5 @@ install.packages("RaceID_0.2.9.tar.gz",repos=NULL, type="source",INSTALL_opts=c(
 
 ### Install NetID package in R
 ```
-install_github("WWXKenmo/NetID_pacckage")
+install_github("WWXKenmo/NetID_package")
 ```
