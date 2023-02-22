@@ -281,10 +281,10 @@ RunNetID2 <- function(spliced, varID_obj,var=FALSE, sampled_cells=NULL,sketch.me
     p[p < pvalue] <- 0
     y[i,varID_obj$NN[,i]] <- c(1,p)
   }
-  print(y)
-  print(class(y))
+  #print(y)
+  #print(class(y))
   ## pruned p-value matrix. p-values of pruned neighbours are set to 0.
-  y <- as.matrix( t(y) )
+  y <- as.matrix( t(as.matrix(y) ))
   y.prune <- y
   y.prune[y.prune!=0] <- 1
 
