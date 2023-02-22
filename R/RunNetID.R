@@ -104,7 +104,37 @@
 #'
 #' @export
 #'
-
+#' @title A check function for NetID
+#'
+#' @description a check function for RunNetID function.
+#' RunNetID have provided netID_params, user could specific the parameters the want, the parameters are listed as follow
+#'
+#' @param var
+#' if using variable gene to calculate principal components, used by geosketch method, default: FALSE
+#'
+#' @param sampled_cells
+#' the barcode or ID of sampled cells
+#'
+#' @param sketch.method
+#' perform sketching sampling on single cell datasets, "geosketch" or "SeuratSketching"
+#'
+#' @param ndim
+#' dimensions of PCs, used by geosketch method, Default: 30
+#' 
+#' @param n_cell
+#' the number of sampled cells, default: 500
+#'
+#' @param Threshold_Num
+#' the minimum nn of each seed cells after assignments, default: 2
+#'
+#' @param normalize
+#' if perform normalization to the count matrix, default: FALSE
+#' 
+#' @param prior_net
+#' if a binary matrix indicate the prior knowledge of gene regulation, row is the regulator, column is the target.
+#' 
+#' @export
+#'
 RunNetID <- function(sce,min_counts = 10,varID_res=NULL, knn = 30, regulators = NULL, targets = NULL,netID_params = list(), velo=TRUE,dynamicInfer=TRUE,maxState = 5,cut_off = 2,work_dir = NULL){
   if(!is.null(work_dir)){setwd(work_dir)}
   suppressPackageStartupMessages(require("mclust"))
