@@ -16,9 +16,10 @@ mamba install -c bioconda -c conda-forge cellrank-krylov
 mamba install -c r r-devtools
 mamba install -c r r-fateid
 ```
-finally, install palantir package
+finally, install palantir and geosketch package
 ```
 pip install palantir
+pip install geosketch
 ```
 
 ### Install RaceID package
