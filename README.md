@@ -11,6 +11,11 @@ conda activate NetID # if it encounter the error, run 'source activate' ahead of
 conda install -c bioconda -c conda-forge cellrank-krylov
 pip install palantir
 ```
+To speed up installation, user could use conda install mamba at first, then use mamba to install other modules
+```
+conda install mamba
+mamba install -c bioconda -c conda-forge cellrank-krylov
+```
 
 ### Install RaceID package
 ```
