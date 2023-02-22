@@ -300,7 +300,7 @@ RunNetID2 <- function(spliced, varID_obj,var=FALSE, sampled_cells=NULL,sketch.me
     y[i,varID_obj$NN[,i]] <- c(1,p)
   }
 
-  y <- as.matrix( t(y) )
+  y <- as.matrix( t(as.matrix(y) ) )
   y.unprune <- y;rm(y);gc()
 
   y.weighted <- y.unprune * y.prune # a weighted and pruned cell-cell graph
