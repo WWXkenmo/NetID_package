@@ -114,7 +114,7 @@ RunNetID <- function(sce,min_counts = 10,varID_res=NULL, knn = 30, regulators = 
 
 
   env = environment()
-  netID_params <- .check_netID_params(netID_params)
+  netID_params <- check_netID_params(netID_params)
   list2env(netID_params,env)
 
   sce <- sce[,colSums(assays(sce)$spliced)>0]
