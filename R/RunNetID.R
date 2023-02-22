@@ -233,32 +233,11 @@ RunNetID2 <- function(spliced, varID_obj,var=FALSE, sampled_cells=NULL,sketch.me
   suppressPackageStartupMessages(require(rsvd))
   suppressPackageStartupMessages(require(Seurat))
   suppressPackageStartupMessages(require(GENIE3))
-  suppressPackageStartupMessages(require(pracma))
 
   ### perform geosketch sampling on expression profile
-  writeLines("Repeat sampling and select the best sample covering whole manifold...")
-  y.final.list <- list()
-
-  if(!is.null(ndim)){
-    exp.m = spliced
-    geneID <- rownames(exp.m)
-    sampleID <- colnames(exp.m)
-    exp.m <- exp.m %*% diag(10^6/colSums(exp.m))
-    rownames(exp.m) <- geneID
-    colnames(exp.m) <- sampleID
-    if(var){X = t(log(exp.m[varID_obj$B$genes,]+1))}else{
-    X = t(log(exp.m[rownames(varID_obj$regData$pearsonRes),]+1))}
-    geosketch <- import('geosketch')
-    s <- rsvd(X, k=ndim)
-	pca <- s$u %*% diag(s$d)
-	rm(exp.m,X);gc()
-  }else{
-    pca <- t(varID_obj$dimRed)
-  }
-  for(nrun in 1:10){
   if(is.null(sampled_cells)){
     exp.m = spliced
-    sketch.indices = Sketching(exp.m = exp.m, varID_obj = varID_obj, var = var,n_cell = n_cell, sketch.method = sketch.method, pca = pca)
+    sketch.indices = Sketching(exp.m = exp.m, varID_obj = varID_obj, var = var,n_cell = n_cell, sketch.method = sketch.method, ndim = ndim)
   }
 
   pvalue <- 0.01
@@ -317,22 +296,10 @@ RunNetID2 <- function(spliced, varID_obj,var=FALSE, sampled_cells=NULL,sketch.me
   count <- function(x) { sum(x!=0)}
   #effectSize[[o]] <- apply(y.final,2,count)
   y.final <- y.final[,apply(y.final,2,count)>Threshold_Num]
-  y.final.list[[nrun]] <- y.final
-  sampled_cells <- NULL
-  }
-  writeLines("select final sampling...")
 
-  if(is.null(sampled_cells)){
-	score <- SampleScore(exp.m,unique(c(regulators,targets)),varID_obj,y.final.list)
-  }
-  writeLines(paste("Best sampling, geodistance: ", max(score),sep=""))
-  y.final <- y.final.list[[which.max(score)]]
   #####################################
   #Generate NetID expression profile
   ks.final <- apply(y.final,2,function(x){  f <- colnames(spliced) %in% rownames(y.final)[ x > 0]; rowMeans(as.matrix(spliced[,f]))} )
-  #norm.factor <- apply(y.final,2,count)
-  #ks.final <- t(apply(ks.final,1,function(x){ x <- x - norm.factor*lm(x~norm.factor)$coefficients[2];x}))
-
   colnames(ks.final) <- colnames(y.final)
   rownames(ks.final) <- rownames(spliced)
   g <- unique(c(targets,regulators))
@@ -345,7 +312,7 @@ RunNetID2 <- function(spliced, varID_obj,var=FALSE, sampled_cells=NULL,sketch.me
   }
   #########################################
   writeLines(paste("aggregated matrix: the number of genes:",nrow(ks.final),"; the number of samples:",ncol(ks.final),sep=""))
-  ks.final[ks.final<0] <- 0
+
   g_c <- GENIE3(log2(ks.final+1),nCores=12,verbose=TRUE,nTrees=500,regulators = regulators, targets = targets)
 
 
@@ -370,7 +337,7 @@ RunNetID2 <- function(spliced, varID_obj,var=FALSE, sampled_cells=NULL,sketch.me
   if(!is.null(prior_net)){
     g_net = prior_net + g_count
     g_net[g_net!=0] <- g_net[g_net!=0] - 1
-    }else{
+  }else{
     g_net = g_count
   }
 
