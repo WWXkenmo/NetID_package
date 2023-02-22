@@ -35,6 +35,15 @@ Then install RaceID in R
 ```
 install.packages("RaceID_0.2.9.tar.gz",repos=NULL, type="source",INSTALL_opts=c("--no-multiarch"))
 ```
+### install required Bioconductor packages
+```
+install.packages("BiocManager")
+BiocManager::install('scran', 'scater', 'GENIE3')
+```
+### install summa
+```
+install_github("learn-ensemble/R-SUMMA")
+```
 
 ### Install NetID package in R
 ```
