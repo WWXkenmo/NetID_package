@@ -6,15 +6,19 @@ A scalable method to infer fate specific gene regulatory network from single cel
 ## Installation
 ### Create conda environment
 ```
-conda create --name NetID python=3.8
+conda create --name NetID python=3.8 r-essentials r-base
 conda activate NetID # if it encounter the error, run 'source activate' ahead of this code
-conda install -c bioconda -c conda-forge cellrank-krylov
-pip install palantir
 ```
 To speed up installation, user could use conda install mamba at first, then use mamba to install other modules
 ```
 conda install mamba
 mamba install -c bioconda -c conda-forge cellrank-krylov
+mamba install -c r r-devtools
+mamba install -c r r-fateid
+```
+finally, install palantir package
+```
+pip install palantir
 ```
 
 ### Install RaceID package
@@ -25,7 +29,7 @@ cd NetID_package
 ```
 install RaceID dependent packages
 ```
-install.packages(c('devtools','coop', 'FateID', 'FNN', 'fpc', 'ggplot2', 'harmony', 'ica', 'igraph', 'irlba', 'leiden', 'locfit', 'matrixStats', 'pheatmap', 'princurve', 'quadprog', 'randomForest', 'runner', 'RColorBrewer', 'Rtsne', 'umap', 'vegan'))
+install.packages(c('coop', 'FateID', 'FNN', 'fpc', 'ggplot2', 'harmony', 'ica', 'igraph', 'irlba', 'leiden', 'locfit', 'matrixStats', 'pheatmap', 'princurve', 'quadprog', 'randomForest', 'runner', 'RColorBrewer', 'Rtsne', 'umap', 'vegan'))
 ```
 Then install RaceID in R
 ```
