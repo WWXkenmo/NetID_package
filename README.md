@@ -56,6 +56,10 @@ BiocManager::install(c('scran', 'scater', 'GENIE3'))
 ```
 devtools::install_github("learn-ensemble/R-SUMMA")
 ```
+### install cytotrace and scent
+```
+devtools::install_github("aet21/SCENT")
+```
 
 ### Install NetID package in R
 ```
