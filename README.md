@@ -30,7 +30,8 @@ cd NetID_package
 ```
 install RaceID dependent packages
 ```
-install.packages(c('coop', 'FNN', 'fpc', 'ggplot2', 'harmony', 'ica', 'igraph', 'irlba', 'leiden', 'locfit', 'matrixStats', 'pheatmap', 'princurve', 'quadprog', 'randomForest', 'runner', 'RColorBrewer', 'Rtsne', 'umap', 'vegan','doParallel'))
+install.packages(c('coop', 'FNN', 'fpc', 'ggplot2', 'harmony', 'ica', 'igraph', 'irlba', 'leiden', 'locfit', 'matrixStats', 'pheatmap', 'princurve', 'quadprog', 'randomForest', 'runner', 'RColorBrewer', 'Rtsne', 'umap', 'vegan'))
+install.packages(c("doParallel","doRNG"))
 ```
 Then install RaceID in R
 ```
