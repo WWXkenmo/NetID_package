@@ -12,14 +12,11 @@ RunNetID(
   regulators = NULL,
   targets = NULL,
   netID_params = list(),
-  velo = FALSE,
-  dynamicInfer = FALSE,
+  velo = TRUE,
+  dynamicInfer = TRUE,
   maxState = 5,
   cut_off = 2,
-  unique_assign = FALSE,
-  restart = FALSE,
-  work_dir = NULL,
-  no_cores = 4
+  work_dir = NULL
 )
 }
 \arguments{
@@ -56,16 +53,16 @@ Default: 5}
 fold change > cut_off would be assigned to the corresponding cluster
 Default: 2}
 
+\item{work_dir}{user could specific the working directory through input the address, and the varID object (pruneKnn) would be saved in this directory.
+Otherwise the local working directory would be used (getwd())
+Default: NULL}
+
 \item{unique_assign}{if uniquely assign the cell fate to each cluster
 Default: FALSE}
 
 \item{restart}{RunNetID would automatically run the pruneKnn if it couldn't find the VarID_res.rds in the working directory. if VarID_res.rds already have
 and user still want to re-run the pruneKnn, set the restart = TRUE
 Default: FALSE}
-
-\item{work_dir}{user could specific the working directory through input the address, and the varID object (pruneKnn) would be saved in this directory.
-Otherwise the local working directory would be used (getwd())
-Default: NULL}
 
 \item{no_cores}{The number of cores would be used. Default: 4}
 

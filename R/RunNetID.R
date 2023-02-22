@@ -105,16 +105,13 @@
 #' @export
 #'
 
-RunNetID <- function(sce,min_counts = 10,varID_res=NULL, knn = 30, regulators = NULL, targets = NULL,netID_params = list(), velo=FALSE,dynamicInfer=FALSE,maxState = 5,cut_off = 2,unique_assign = FALSE,restart = FALSE,work_dir = NULL,no_cores=4){
+RunNetID <- function(sce,min_counts = 10,varID_res=NULL, knn = 30, regulators = NULL, targets = NULL,netID_params = list(), velo=TRUE,dynamicInfer=TRUE,maxState = 5,cut_off = 2,work_dir = NULL){
   if(!is.null(work_dir)){setwd(work_dir)}
   suppressPackageStartupMessages(require("mclust"))
   suppressPackageStartupMessages(require("GENIE3"))
-  suppressPackageStartupMessages(require("pracma"))
-  suppressPackageStartupMessages(require("RaceID"))
-
 
   env = environment()
-  netID_params <- check_netID_params(netID_params)
+  netID_params <- .check_netID_params(netID_params)
   list2env(netID_params,env)
 
   sce <- sce[,colSums(assays(sce)$spliced)>0]
@@ -124,32 +121,32 @@ RunNetID <- function(sce,min_counts = 10,varID_res=NULL, knn = 30, regulators = 
   g <- rownames(X)[rowSums(X)>min_counts]
 
   if(dynamicInfer){
-  sc <- reticulate::import('scanpy', convert = FALSE)
-  adata_exp <- sc$read_h5ad("./output/FateRes.h5ad")
-  if(velo){
-  adata_velo <- sc$read_h5ad("./output_velo/FateRes.h5ad")
-  velo_m <- t(py_to_r(adata_velo$layers["velocity"]))
-  rownames(velo_m) <- rownames(py_to_r(adata_velo$var))
-  colnames(velo_m) <- rownames(py_to_r(adata_velo$obs))
-  }
+    sc <- reticulate::import('scanpy', convert = FALSE)
+    adata_exp <- sc$read_h5ad("./output/FateRes.h5ad")
+    if(velo){
+      adata_velo <- sc$read_h5ad("./output_velo/FateRes.h5ad")
+      velo_m <- t(py_to_r(adata_velo$layers["velocity"]))
+      rownames(velo_m) <- rownames(py_to_r(adata_velo$var))
+      colnames(velo_m) <- rownames(py_to_r(adata_velo$obs))
+    }
 
-  GEP <- t(py_to_r(adata_exp$X))
-  rownames(GEP) <- rownames(py_to_r(adata_exp$var))
-  colnames(GEP) <- rownames(py_to_r(adata_exp$obs))
-  g <- rownames(GEP)
+    GEP <- t(py_to_r(adata_exp$X))
+    rownames(GEP) <- rownames(py_to_r(adata_exp$var))
+    colnames(GEP) <- rownames(py_to_r(adata_exp$obs))
+    g <- rownames(GEP)
   }
 
   # Build GRN
   X <- as.matrix(X)
   if(is.null(varID_res)){
-  if(length(intersect(list.files(getwd()),"varID_res.rds")) == 1&&restart == FALSE){
-    writeLines("Find VarID object at local dictionary, Read VarID object...")
-    varID_res <- readRDS("varID_res.rds")
-  }else{
-  writeLines("Build VarID object...")
-  varID_res   <- pruneKnn(X[g,],knn=as.numeric(knn),no_cores=no_cores,FSelect = TRUE,pca.scale=TRUE)
-  saveRDS(varID_res,file="varID_res.rds")
-  }
+    if(length(intersect(list.files(getwd()),"varID_res.rds")) == 1){
+      writeLines("Find VarID object at local dictionary, Read VarID object...")
+      varID_res <- readRDS("varID_res.rds")
+    }else{
+      writeLines("Build VarID object...")
+      varID_res   <- pruneKnn(X[g,],knn=as.numeric(knn),no_cores=4, pca.scale = TRUE, FSelect = TRUE)
+      saveRDS(varID_res,file="varID_res.rds")
+    }
   }
   regulators <- intersect(regulators,g);targets <- intersect(targets,g)
 
@@ -157,69 +154,68 @@ RunNetID <- function(sce,min_counts = 10,varID_res=NULL, knn = 30, regulators = 
   skeleton <- RunNetID2(spliced = X[g,],varID_obj = varID_res,var=var,sampled_cells = sampled_cells, sketch.method = sketch.method,n_cell = n_cell,ndim = ndim,regulators = regulators,targets = targets,Threshold_Num = Threshold_Num,normalize = normalize,prior_net = prior_net)
 
   if(dynamicInfer){
-  ##########################
-  ## extract phase information from velocity vector
-  ## load normalized GEP
-  # load fate probability
-  fate_prob <- py_to_r(adata_exp$obs)
-  ID <- colnames(fate_prob)[-ncol(fate_prob)]
-  barcode <- rownames(fate_prob)
-  fate_prob <- as.matrix(fate_prob[,-ncol(fate_prob)])
-  rownames(fate_prob) <- barcode
-  colnames(fate_prob) <- ID
+    ##########################
+    ## extract phase information from velocity vector
+    ## load normalized GEP
+    # load fate probability
+    fate_prob <- py_to_r(adata_exp$obs)
+    ID <- colnames(fate_prob)[-ncol(fate_prob)]
+    barcode <- rownames(fate_prob)
+    fate_prob <- as.matrix(fate_prob[,-ncol(fate_prob)])
+    rownames(fate_prob) <- barcode
+    colnames(fate_prob) <- ID
 
-  if(velo){
-  fate_prob_velo <- py_to_r(adata_velo$obs)
-  ID <- colnames(fate_prob_velo)[-ncol(fate_prob_velo)]
-  barcode <- rownames(fate_prob_velo)
-  fate_prob_velo <- as.matrix(fate_prob_velo[,-ncol(fate_prob_velo)])
-  rownames(fate_prob_velo) <- barcode
-  colnames(fate_prob_velo) <- ID
+    if(velo){
+      fate_prob_velo <- py_to_r(adata_velo$obs)
+      ID <- colnames(fate_prob_velo)[-ncol(fate_prob_velo)]
+      barcode <- rownames(fate_prob_velo)
+      fate_prob_velo <- as.matrix(fate_prob_velo[,-ncol(fate_prob_velo)])
+      rownames(fate_prob_velo) <- barcode
+      colnames(fate_prob_velo) <- ID
 
-  ### generate aggregate velo_m
-  velo_m_aggre <- apply(skeleton$y.final,2,function(x){  f <- colnames(velo_m) %in% rownames(skeleton$y.final)[ x > 0]; rowMeans(as.matrix(velo_m[,f]))} )
-  colnames(velo_m_aggre) <- colnames(skeleton$y.final)
-  rownames(velo_m_aggre) <- rownames(velo_m)
-  }
+      ### generate aggregate velo_m
+      velo_m_aggre <- apply(skeleton$y.final,2,function(x){  f <- colnames(velo_m) %in% rownames(skeleton$y.final)[ x > 0]; rowMeans(as.matrix(velo_m[,f]))} )
+      colnames(velo_m_aggre) <- colnames(skeleton$y.final)
+      rownames(velo_m_aggre) <- rownames(velo_m)
+    }
 
-  cat("Classify lineage for palantir fate prob...\n")
-  if(ncol(fate_prob)==1){
-  LineageClass <- list()
-  LineageClass[[colnames(fate_prob)]] <- rownames(fate_prob)
-  }else{
-  LineageClass <- LineageClassifer(fate_prob,maxState = maxState, cut_off = cut_off, unique_assign = unique_assign)
-  }
+    cat("Classify lineage for palantir fate prob...\n")
+    if(ncol(fate_prob)==1){
+      LineageClass <- LineageClassifer(fate_prob,maxState = maxState, cut_off = cut_off)
+    }else{
+      LineageClass <- LineageClassifer(fate_prob,maxState = maxState, cut_off = cut_off)
+    }
 
-  if(velo){
-  cat("Classify lineage for cellrank fate prob...\n")
-  if(ncol(fate_prob_velo)==1){
-   LineageClass_velo <- list()
-   LineageClass_velo[[colnames(fate_prob_velo)]] <- rownames(fate_prob_velo)
-  }else{
-  LineageClass_velo <- LineageClassifer(fate_prob_velo,maxState = maxState, cut_off = cut_off, unique_assign = unique_assign)
-  }
-  }
+    if(velo){
+      cat("Classify lineage for cellrank fate prob...\n")
+      if(ncol(fate_prob_velo)==1){
+        LineageClass_velo <- list()
+        LineageClass_velo[[colnames(fate_prob_velo)]] <- rownames(fate_prob_velo)
+      }else{
+        LineageClass_velo <- LineageClassifer(fate_prob_velo,maxState = maxState)
+      }
+    }
 
-  ########
-  pseudotime <- py_to_r(adata_exp$obs)$pseudotime
-  names(pseudotime) <- rownames(py_to_r(adata_exp$obs))
+    ########
+    pseudotime <- py_to_r(adata_exp$obs)$pseudotime
+    names(pseudotime) <- rownames(py_to_r(adata_exp$obs))
 
-  if(velo){
-  velocity_pseudotime <- py_to_r(adata_velo$obs)$velocity_pseudotime
-  names(velocity_pseudotime) <- rownames(py_to_r(adata_velo$obs))
-  }
+    if(velo){
+      velocity_pseudotime <- py_to_r(adata_velo$obs)$velocity_pseudotime
+      names(velocity_pseudotime) <- rownames(py_to_r(adata_velo$obs))
+    }
   }
   ########
   writeLines("Done...")
   res <- list()
   if(dynamicInfer){
-  res$fate_prob = fate_prob;res$LineageClass = LineageClass
-  res$fate_prob = res$fate_prob[,names(LineageClass)]
-  if(velo){res$fate_prob_velo = fate_prob_velo;res$LineageClass_velo = LineageClass_velo}
-  res$pseudotime <- pseudotime
-  if(velo) res$velocity_pseudotime <- velocity_pseudotime
-  if(velo) res$velo_m <- velo_m; res$velo_m_aggre <- velo_m_aggre
-  res$GEP <- GEP
+    res$fate_prob = fate_prob;res$LineageClass = LineageClass
+    if(velo){res$fate_prob_velo = fate_prob_velo;res$LineageClass_velo = LineageClass_velo}
+    res$pseudotime <- pseudotime
+    if(velo) res$velocity_pseudotime <- velocity_pseudotime
+    if(velo) res$velo_m <- velo_m
+    if(velo) res$velo_m_aggre <- velo_m_aggre
+    res$GEP <- GEP
   }
   res$skeleton <- skeleton
   res$varID_res <- varID_res
