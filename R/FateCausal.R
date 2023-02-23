@@ -229,7 +229,7 @@ FateCausal <- function(dyn.out,velo_infor=FALSE,L=30,alpha = 0,lambda=100,cutoff
 	GENIE3_grn <- t(dyn.out$skeleton$GENIE3_net) * t(dyn.out$skeleton$skeleton)
 	GENIE3_grn <- GENIE3_grn[rownames(grn_list[[1]]),colnames(grn_list[[1]])]
 	#GENIE3_grn <- GENIE3_grn[genes,]
-	GENIE3_score <- as.data.frame(summary(as(GENIE3_grn, "sparseMatrix")))
+	GENIE3_score <- as.data.frame(Matrix::summary(as(GENIE3_grn, "sparseMatrix")))
 	GENIE3_score$x <- rankScore(GENIE3_score$x)
 	GENIE3_base <- sparseMatrix(
 	  i = GENIE3_score$i,
@@ -244,7 +244,7 @@ FateCausal <- function(dyn.out,velo_infor=FALSE,L=30,alpha = 0,lambda=100,cutoff
 	for(i in 1:ncol(fate_prob)){
 	  ### generate the rank score
 	  grn <- grn_list[[i]]
-	  grn_score <- as.data.frame(summary(as(grn, "sparseMatrix")))
+	  grn_score <- as.data.frame(Matrix::summary(as(grn, "sparseMatrix")))
 	  grn_score$x <- rankScore(grn_score$x)
 	  m1 <- sparseMatrix(
 	  i = grn_score$i,
@@ -257,7 +257,7 @@ FateCausal <- function(dyn.out,velo_infor=FALSE,L=30,alpha = 0,lambda=100,cutoff
 	  ### generate the rank score
 	  if(velo_infor){
 	  grn <- grn_velo_list[[i]]
-	  grn_score <- as.data.frame(summary(as(grn, "sparseMatrix")))
+	  grn_score <- as.data.frame(Matrix::summary(as(grn, "sparseMatrix")))
 	  grn_score$x <- rankScore(grn_score$x)
 	  m2 <- sparseMatrix(
 	  i = grn_score$i,
@@ -280,7 +280,7 @@ FateCausal <- function(dyn.out,velo_infor=FALSE,L=30,alpha = 0,lambda=100,cutoff
 	  ### aggregate through SUMMA
 	  if(aggre_method == "SUMMA"){
 	  scaffoldNet <- as(as.matrix(t(dyn.out$skeleton$skeleton)[rownames(grn_list[[1]]),colnames(grn_list[[1]])]), "dgCMatrix")
-	  scaffoldNet <- summary(scaffoldNet)
+	  scaffoldNet <- Matrix::summary(scaffoldNet)
 	  prediction_m <- cbind(apply(scaffoldNet,MARGIN=1,extract,M=granger_net),apply(scaffoldNet,MARGIN=1,extract,M=GENIE3_base))
       weight_vec <- summa(prediction_m,"rank")@estimated_performance
 	  weight_vec <- weight_vec / sum(weight_vec)
@@ -289,7 +289,7 @@ FateCausal <- function(dyn.out,velo_infor=FALSE,L=30,alpha = 0,lambda=100,cutoff
 	  }
 	  if(aggre_method == "RobustRankAggreg"){
 	  scaffoldNet <- as(as.matrix(t(dyn.out$skeleton$skeleton)[rownames(grn_list[[1]]),colnames(grn_list[[1]])]), "dgCMatrix")
-	  scaffoldNet <- summary(scaffoldNet)
+	  scaffoldNet <- Matrix::summary(scaffoldNet)
 	  prediction_m <- cbind(apply(scaffoldNet,MARGIN=1,extract,M=granger_net),apply(scaffoldNet,MARGIN=1,extract,M=GENIE3_base))
 	  linkList <- list(c(1:nrow(prediction_m))[order(prediction_m[,1],decreasing=TRUE)],
 	                   c(1:nrow(prediction_m))[order(prediction_m[,2],decreasing=TRUE)])
