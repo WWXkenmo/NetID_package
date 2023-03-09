@@ -8,68 +8,33 @@ A scalable method to infer fate specific gene regulatory network from single cel
 See Jupyter Notebooks in notebook folder
 
 ## Installation
-### Create conda environment
+### Basic installation
+#### Create conda environment (recommand but not necessary)
 ```
 conda create --name NetID python=3.8 r-essentials r-base
 conda activate NetID # if it encounter the error, run 'source activate' ahead of this code
 ```
+#### Install geosketch
+```
+pip install geosketch
+```
+#### install NetID
+```
+devtools::install_github("WWXKenmo/NetID_package")
+```
+### Advance installation
+#### install cellrank and palantir to realize lineage-specific GRN prediction
 To speed up installation, user could use conda install mamba at first, then use mamba to install other modules
 ```
 conda install mamba
 mamba install -c bioconda -c conda-forge cellrank-krylov
-mamba install -c r r-devtools
-mamba install -c r r-fateid
+pip install numpy==1.23.5, palantir
 ```
-reinstall the numpy
-```
-pip install numpy==1.23.5
-```
-finally, install palantir and geosketch package
-```
-pip install palantir
-pip install geosketch
-```
-
-### Install RaceID package
-clone the git repo into local directory
-```
-git clone https://github.com/WWXKenmo/NetID_package.git
-cd NetID_package
-```
-install RaceID dependent packages
-```
-install.packages(c('coop', 'FNN', 'fpc', 'ggplot2', 'harmony', 'ica', 'igraph', 'irlba', 'leiden', 'locfit', 'matrixStats', 'pheatmap', 'princurve', 'quadprog', 'randomForest', 'runner', 'RColorBrewer', 'Rtsne', 'umap', 'vegan'))
-install.packages(c("doParallel","doRNG"))
-```
-Then install RaceID in R
-```
-install.packages("RaceID_0.2.9.tar.gz",repos=NULL, type="source",INSTALL_opts=c("--no-multiarch"))
-```
-### install required Bioconductor packages
-install the required packages
-```
-mamba install -c r r-ragg
-mamba install -c r r-ggrastr
-```
-install bioconductor packages
-```
-install.packages("BiocManager")
-BiocManager::install(c('scran', 'scater', 'GENIE3'))
-```
-### install summa
+#### install summa to output global GRN
 ```
 devtools::install_github("learn-ensemble/R-SUMMA")
 ```
-### install cytotrace and scent
+### install cytotrace and scent to determine the root cell
 ```
 devtools::install_github("aet21/SCENT")
-```
-
-### Install NetID package in R
-```
-devtools::install_github("WWXKenmo/NetID_package")
-```
-or
-```
-install.packages("NetID_0.1.0.tar.gz",repos=NULL, type="source",INSTALL_opts=c("--no-multiarch"))
 ```
