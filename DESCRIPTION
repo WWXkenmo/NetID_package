@@ -8,8 +8,6 @@ Imports:
     lmtest,
     glmnet,
     RobustRankAggreg,
-    scran,
-    scater,
     irlba,
     rsvd,
     reticulate,
@@ -21,7 +19,6 @@ Imports:
     doParallel,
     doRNG,
     scran,
-    scater,
     GENIE3,
     RaceID (>= 0.2.9)
 Author: Weixu Wang and Dominic Grün
