@@ -140,12 +140,12 @@ if palantir_model:
         sc.pp.neighbors(ad, n_pcs=npcs, n_neighbors=knn)
         sc.tl.umap(ad)
         umap = pd.DataFrame(ad.obsm['X_umap'], index=ad.obs_names,columns = ["x","y"])
-        if path.exists("figures/"):
-            plot_palantir_results(pr_res = pr_res, tsne = umap,writekey="figures/palantir_res.png",save=True)
+        if path.exists("palantir_figures/"):
+            plot_palantir_results(pr_res = pr_res, tsne = umap,writekey="palantir_figures/palantir_res.png",save=True)
             sc.pl.embedding(ad, basis='umap',color = cluster_label,legend_loc='on data', title='',legend_fontsize='x-small',save='.png')
         else:
-            os.mkdir("figures/")
-            plot_palantir_results(pr_res = pr_res, tsne = umap,writekey="figures/palantir_res.png",save=True)
+            os.mkdir("palantir_figures/")
+            plot_palantir_results(pr_res = pr_res, tsne = umap,writekey="palantir_figures/palantir_res.png",save=True)
             sc.pl.embedding(ad, basis='umap',color = cluster_label,legend_loc='on data', title='',legend_fontsize='x-small',save='.png')
             
     logging.info("Identify " + str(fate_prob.shape[1])+" terminal states")
@@ -242,8 +242,15 @@ else:
     adata_save.layers["velocity"] = velocity.T
     adata_save.var = var
     
-if path.exists("output/"):
-    adata_save.write("output/FateRes.h5ad")
+if palantir_model:
+    if path.exists("output/"):
+        adata_save.write("output/FateRes.h5ad")
+    else:
+        os.mkdir("output/")
+        adata_save.write("output/FateRes.h5ad")
 else:
-    os.mkdir("output/")
-    adata_save.write("output/FateRes.h5ad")
+    if path.exists("output_velo/"):
+        adata_save.write("output_velo/FateRes.h5ad")
+    else:
+        os.mkdir("output_velo/")
+        adata_save.write("output_velo/FateRes.h5ad")

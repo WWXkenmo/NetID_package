@@ -14,16 +14,16 @@
 #'
 #' @param knn
 #' default: 30
-#'
+#' 
 #' @param velo
 #' if run the velocity model (cellrank), default: TRUE
 #'
-#' @param fate_predict
+#' @params fate_predict
 #' default: TRUE
-#'
-#' @param cluster_label
+#' 
+#' @params cluster_label
 #' specific the attributes in SingleCellExperiment object that contains the cluster label information
-#'
+#' 
 #' @export
 #'
 check_global_params <- function(params){
