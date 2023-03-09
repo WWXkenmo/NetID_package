@@ -104,17 +104,44 @@
 #'
 #' @export
 #'
-
-RunNetID <- function(sce,min_counts = 10,varID_res=NULL, knn = 30, regulators = NULL, targets = NULL,netID_params = list(), velo=FALSE,dynamicInfer=FALSE,maxState = 5,cut_off = 2,unique_assign = FALSE,restart = FALSE,work_dir = NULL,no_cores=4){
+#' @title A check function for NetID
+#'
+#' @description a check function for RunNetID function.
+#' RunNetID have provided netID_params, user could specific the parameters the want, the parameters are listed as follow
+#'
+#' @param var
+#' if using variable gene to calculate principal components, used by geosketch method, default: FALSE
+#'
+#' @param sampled_cells
+#' the barcode or ID of sampled cells
+#'
+#' @param sketch.method
+#' perform sketching sampling on single cell datasets, "geosketch" or "SeuratSketching"
+#'
+#' @param ndim
+#' dimensions of PCs, used by geosketch method, Default: 30
+#'
+#' @param n_cell
+#' the number of sampled cells, default: 500
+#'
+#' @param Threshold_Num
+#' the minimum nn of each seed cells after assignments, default: 2
+#'
+#' @param normalize
+#' if perform normalization to the count matrix, default: FALSE
+#'
+#' @param prior_net
+#' if a binary matrix indicate the prior knowledge of gene regulation, row is the regulator, column is the target.
+#'
+#' @export
+#'
+RunNetID <- function(sce,min_counts = 10,varID_res=NULL, knn = 30, regulators = NULL, targets = NULL,netID_params = list(), velo=TRUE,dynamicInfer=TRUE,maxState = 5,cut_off = 2,work_dir = NULL){
   if(!is.null(work_dir)){setwd(work_dir)}
   suppressPackageStartupMessages(require("mclust"))
   suppressPackageStartupMessages(require("GENIE3"))
-  suppressPackageStartupMessages(require("pracma"))
-  suppressPackageStartupMessages(require("RaceID"))
-
 
   env = environment()
-  netID_params <- .check_netID_params(netID_params)
+  netID_params <- check_netID_params(netID_params)
   list2env(netID_params,env)
 
   sce <- sce[,colSums(assays(sce)$spliced)>0]
@@ -124,32 +151,32 @@ RunNetID <- function(sce,min_counts = 10,varID_res=NULL, knn = 30, regulators = 
   g <- rownames(X)[rowSums(X)>min_counts]
 
   if(dynamicInfer){
-  sc <- reticulate::import('scanpy', convert = FALSE)
-  adata_exp <- sc$read_h5ad("./output/FateRes.h5ad")
-  if(velo){
-  adata_velo <- sc$read_h5ad("./output_velo/FateRes.h5ad")
-  velo_m <- t(py_to_r(adata_velo$layers["velocity"]))
-  rownames(velo_m) <- rownames(py_to_r(adata_velo$var))
-  colnames(velo_m) <- rownames(py_to_r(adata_velo$obs))
-  }
+    sc <- reticulate::import('scanpy', convert = FALSE)
+    adata_exp <- sc$read_h5ad("./output/FateRes.h5ad")
+    if(velo){
+      adata_velo <- sc$read_h5ad("./output_velo/FateRes.h5ad")
+      velo_m <- t(py_to_r(adata_velo$layers["velocity"]))
+      rownames(velo_m) <- rownames(py_to_r(adata_velo$var))
+      colnames(velo_m) <- rownames(py_to_r(adata_velo$obs))
+    }
 
-  GEP <- t(py_to_r(adata_exp$X))
-  rownames(GEP) <- rownames(py_to_r(adata_exp$var))
-  colnames(GEP) <- rownames(py_to_r(adata_exp$obs))
-  g <- rownames(GEP)
+    GEP <- t(py_to_r(adata_exp$X))
+    rownames(GEP) <- rownames(py_to_r(adata_exp$var))
+    colnames(GEP) <- rownames(py_to_r(adata_exp$obs))
+    g <- rownames(GEP)
   }
 
   # Build GRN
   X <- as.matrix(X)
   if(is.null(varID_res)){
-  if(length(intersect(list.files(getwd()),"varID_res.rds")) == 1&&restart == FALSE){
-    writeLines("Find VarID object at local dictionary, Read VarID object...")
-    varID_res <- readRDS("varID_res.rds")
-  }else{
-  writeLines("Build VarID object...")
-  varID_res   <- pruneKnn(X[g,],knn=as.numeric(knn),no_cores=no_cores,FSelect = TRUE,pca.scale=TRUE)
-  saveRDS(varID_res,file="varID_res.rds")
-  }
+    if(length(intersect(list.files(getwd()),"varID_res.rds")) == 1){
+      writeLines("Find VarID object at local dictionary, Read VarID object...")
+      varID_res <- readRDS("varID_res.rds")
+    }else{
+      writeLines("Build VarID object...")
+      varID_res   <- pruneKnn(X[g,],knn=as.numeric(knn),no_cores=4, pca.scale = TRUE, FSelect = TRUE)
+      saveRDS(varID_res,file="varID_res.rds")
+    }
   }
   regulators <- intersect(regulators,g);targets <- intersect(targets,g)
 
@@ -157,69 +184,68 @@ RunNetID <- function(sce,min_counts = 10,varID_res=NULL, knn = 30, regulators = 
   skeleton <- RunNetID2(spliced = X[g,],varID_obj = varID_res,var=var,sampled_cells = sampled_cells, sketch.method = sketch.method,n_cell = n_cell,ndim = ndim,regulators = regulators,targets = targets,Threshold_Num = Threshold_Num,normalize = normalize,prior_net = prior_net)
 
   if(dynamicInfer){
-  ##########################
-  ## extract phase information from velocity vector
-  ## load normalized GEP
-  # load fate probability
-  fate_prob <- py_to_r(adata_exp$obs)
-  ID <- colnames(fate_prob)[-ncol(fate_prob)]
-  barcode <- rownames(fate_prob)
-  fate_prob <- as.matrix(fate_prob[,-ncol(fate_prob)])
-  rownames(fate_prob) <- barcode
-  colnames(fate_prob) <- ID
+    ##########################
+    ## extract phase information from velocity vector
+    ## load normalized GEP
+    # load fate probability
+    fate_prob <- py_to_r(adata_exp$obs)
+    ID <- colnames(fate_prob)[-ncol(fate_prob)]
+    barcode <- rownames(fate_prob)
+    fate_prob <- as.matrix(fate_prob[,-ncol(fate_prob)])
+    rownames(fate_prob) <- barcode
+    colnames(fate_prob) <- ID
 
-  if(velo){
-  fate_prob_velo <- py_to_r(adata_velo$obs)
-  ID <- colnames(fate_prob_velo)[-ncol(fate_prob_velo)]
-  barcode <- rownames(fate_prob_velo)
-  fate_prob_velo <- as.matrix(fate_prob_velo[,-ncol(fate_prob_velo)])
-  rownames(fate_prob_velo) <- barcode
-  colnames(fate_prob_velo) <- ID
+    if(velo){
+      fate_prob_velo <- py_to_r(adata_velo$obs)
+      ID <- colnames(fate_prob_velo)[-ncol(fate_prob_velo)]
+      barcode <- rownames(fate_prob_velo)
+      fate_prob_velo <- as.matrix(fate_prob_velo[,-ncol(fate_prob_velo)])
+      rownames(fate_prob_velo) <- barcode
+      colnames(fate_prob_velo) <- ID
 
-  ### generate aggregate velo_m
-  velo_m_aggre <- apply(skeleton$y.final,2,function(x){  f <- colnames(velo_m) %in% rownames(skeleton$y.final)[ x > 0]; rowMeans(as.matrix(velo_m[,f]))} )
-  colnames(velo_m_aggre) <- colnames(skeleton$y.final)
-  rownames(velo_m_aggre) <- rownames(velo_m)
-  }
+      ### generate aggregate velo_m
+      velo_m_aggre <- apply(skeleton$y.final,2,function(x){  f <- colnames(velo_m) %in% rownames(skeleton$y.final)[ x > 0]; rowMeans(as.matrix(velo_m[,f]))} )
+      colnames(velo_m_aggre) <- colnames(skeleton$y.final)
+      rownames(velo_m_aggre) <- rownames(velo_m)
+    }
 
-  cat("Classify lineage for palantir fate prob...\n")
-  if(ncol(fate_prob)==1){
-  LineageClass <- list()
-  LineageClass[[colnames(fate_prob)]] <- rownames(fate_prob)
-  }else{
-  LineageClass <- LineageClassifer(fate_prob,maxState = maxState, cut_off = cut_off, unique_assign = unique_assign)
-  }
+    cat("Classify lineage for palantir fate prob...\n")
+    if(ncol(fate_prob)==1){
+      LineageClass <- LineageClassifer(fate_prob,maxState = maxState, cut_off = cut_off)
+    }else{
+      LineageClass <- LineageClassifer(fate_prob,maxState = maxState, cut_off = cut_off)
+    }
 
-  if(velo){
-  cat("Classify lineage for cellrank fate prob...\n")
-  if(ncol(fate_prob_velo)==1){
-   LineageClass_velo <- list()
-   LineageClass_velo[[colnames(fate_prob_velo)]] <- rownames(fate_prob_velo)
-  }else{
-  LineageClass_velo <- LineageClassifer(fate_prob_velo,maxState = maxState, cut_off = cut_off, unique_assign = unique_assign)
-  }
-  }
+    if(velo){
+      cat("Classify lineage for cellrank fate prob...\n")
+      if(ncol(fate_prob_velo)==1){
+        LineageClass_velo <- list()
+        LineageClass_velo[[colnames(fate_prob_velo)]] <- rownames(fate_prob_velo)
+      }else{
+        LineageClass_velo <- LineageClassifer(fate_prob_velo,maxState = maxState)
+      }
+    }
 
-  ########
-  pseudotime <- py_to_r(adata_exp$obs)$pseudotime
-  names(pseudotime) <- rownames(py_to_r(adata_exp$obs))
+    ########
+    pseudotime <- py_to_r(adata_exp$obs)$pseudotime
+    names(pseudotime) <- rownames(py_to_r(adata_exp$obs))
 
-  if(velo){
-  velocity_pseudotime <- py_to_r(adata_velo$obs)$velocity_pseudotime
-  names(velocity_pseudotime) <- rownames(py_to_r(adata_velo$obs))
-  }
+    if(velo){
+      velocity_pseudotime <- py_to_r(adata_velo$obs)$velocity_pseudotime
+      names(velocity_pseudotime) <- rownames(py_to_r(adata_velo$obs))
+    }
   }
   ########
   writeLines("Done...")
   res <- list()
   if(dynamicInfer){
-  res$fate_prob = fate_prob;res$LineageClass = LineageClass
-  res$fate_prob = res$fate_prob[,names(LineageClass)]
-  if(velo){res$fate_prob_velo = fate_prob_velo;res$LineageClass_velo = LineageClass_velo}
-  res$pseudotime <- pseudotime
-  if(velo) res$velocity_pseudotime <- velocity_pseudotime
-  if(velo) res$velo_m <- velo_m; res$velo_m_aggre <- velo_m_aggre
-  res$GEP <- GEP
+    res$fate_prob = fate_prob;res$LineageClass = LineageClass
+    if(velo){res$fate_prob_velo = fate_prob_velo;res$LineageClass_velo = LineageClass_velo}
+    res$pseudotime <- pseudotime
+    if(velo) res$velocity_pseudotime <- velocity_pseudotime
+    if(velo) res$velo_m <- velo_m
+    if(velo) res$velo_m_aggre <- velo_m_aggre
+    res$GEP <- GEP
   }
   res$skeleton <- skeleton
   res$varID_res <- varID_res
@@ -233,32 +259,11 @@ RunNetID2 <- function(spliced, varID_obj,var=FALSE, sampled_cells=NULL,sketch.me
   suppressPackageStartupMessages(require(rsvd))
   suppressPackageStartupMessages(require(Seurat))
   suppressPackageStartupMessages(require(GENIE3))
-  suppressPackageStartupMessages(require(pracma))
 
   ### perform geosketch sampling on expression profile
-  writeLines("Repeat sampling and select the best sample covering whole manifold...")
-  y.final.list <- list()
-
-  if(!is.null(ndim)){
-    exp.m = spliced
-    geneID <- rownames(exp.m)
-    sampleID <- colnames(exp.m)
-    exp.m <- exp.m %*% diag(10^6/colSums(exp.m))
-    rownames(exp.m) <- geneID
-    colnames(exp.m) <- sampleID
-    if(var){X = t(log(exp.m[varID_obj$B$genes,]+1))}else{
-    X = t(log(exp.m[rownames(varID_obj$regData$pearsonRes),]+1))}
-    geosketch <- import('geosketch')
-    s <- rsvd(X, k=ndim)
-	pca <- s$u %*% diag(s$d)
-	rm(exp.m,X);gc()
-  }else{
-    pca <- t(varID_obj$dimRed)
-  }
-  for(nrun in 1:10){
   if(is.null(sampled_cells)){
     exp.m = spliced
-    sketch.indices = Sketching(exp.m = exp.m, varID_obj = varID_obj, var = var,n_cell = n_cell, sketch.method = sketch.method, pca = pca)
+    sketch.indices = Sketching(exp.m = exp.m, varID_obj = varID_obj, var = var,n_cell = n_cell, sketch.method = sketch.method, ndim = ndim)
   }
 
   pvalue <- 0.01
@@ -276,8 +281,10 @@ RunNetID2 <- function(spliced, varID_obj,var=FALSE, sampled_cells=NULL,sketch.me
     p[p < pvalue] <- 0
     y[i,varID_obj$NN[,i]] <- c(1,p)
   }
+  #print(y)
+  #print(class(y))
   ## pruned p-value matrix. p-values of pruned neighbours are set to 0.
-  y <- as.matrix( t(y) )
+  y <- as.matrix( t(as.matrix(y) ))
   y.prune <- y
   y.prune[y.prune!=0] <- 1
 
@@ -293,7 +300,7 @@ RunNetID2 <- function(spliced, varID_obj,var=FALSE, sampled_cells=NULL,sketch.me
     y[i,varID_obj$NN[,i]] <- c(1,p)
   }
 
-  y <- as.matrix( t(y) )
+  y <- as.matrix( t(as.matrix(y) ) )
   y.unprune <- y;rm(y);gc()
 
   y.weighted <- y.unprune * y.prune # a weighted and pruned cell-cell graph
@@ -317,22 +324,10 @@ RunNetID2 <- function(spliced, varID_obj,var=FALSE, sampled_cells=NULL,sketch.me
   count <- function(x) { sum(x!=0)}
   #effectSize[[o]] <- apply(y.final,2,count)
   y.final <- y.final[,apply(y.final,2,count)>Threshold_Num]
-  y.final.list[[nrun]] <- y.final
-  sampled_cells <- NULL
-  }
-  writeLines("select final sampling...")
 
-  if(is.null(sampled_cells)){
-	score <- SampleScore(exp.m,unique(c(regulators,targets)),varID_obj,y.final.list)
-  }
-  writeLines(paste("Best sampling, geodistance: ", max(score),sep=""))
-  y.final <- y.final.list[[which.max(score)]]
   #####################################
   #Generate NetID expression profile
   ks.final <- apply(y.final,2,function(x){  f <- colnames(spliced) %in% rownames(y.final)[ x > 0]; rowMeans(as.matrix(spliced[,f]))} )
-  #norm.factor <- apply(y.final,2,count)
-  #ks.final <- t(apply(ks.final,1,function(x){ x <- x - norm.factor*lm(x~norm.factor)$coefficients[2];x}))
-
   colnames(ks.final) <- colnames(y.final)
   rownames(ks.final) <- rownames(spliced)
   g <- unique(c(targets,regulators))
@@ -345,7 +340,7 @@ RunNetID2 <- function(spliced, varID_obj,var=FALSE, sampled_cells=NULL,sketch.me
   }
   #########################################
   writeLines(paste("aggregated matrix: the number of genes:",nrow(ks.final),"; the number of samples:",ncol(ks.final),sep=""))
-  ks.final[ks.final<0] <- 0
+
   g_c <- GENIE3(log2(ks.final+1),nCores=12,verbose=TRUE,nTrees=500,regulators = regulators, targets = targets)
 
 
@@ -370,7 +365,7 @@ RunNetID2 <- function(spliced, varID_obj,var=FALSE, sampled_cells=NULL,sketch.me
   if(!is.null(prior_net)){
     g_net = prior_net + g_count
     g_net[g_net!=0] <- g_net[g_net!=0] - 1
-    }else{
+  }else{
     g_net = g_count
   }
 
@@ -381,71 +376,71 @@ RunNetID2 <- function(spliced, varID_obj,var=FALSE, sampled_cells=NULL,sketch.me
 }
 
 LineageClassifer <- function(fate_prob,cut_off=2,maxState = 5, diffvar=TRUE, unique_assign = FALSE){
-    sampleID <- rownames(fate_prob)
-	cellfate <- colnames(fate_prob)
-	#fate_prob <- fate_prob %*% diag(1/colMeans(fate_prob))
-	#fate_prob <- diag(1/rowSums(fate_prob)) %*% fate_prob
-	rownames(fate_prob) <- sampleID
-	colnames(fate_prob) <- cellfate
-	fateprob.v <- log2(1.000001+ fate_prob / (1.000001 - fate_prob))
-	if(diffvar == TRUE){
-		## default assumes different variance for clusters
-		mcl.o <- Mclust(fateprob.v, G = maxState)
-	}
-	else {
-		mcl.o <- Mclust(fateprob.v, G = maxState, modelNames = c("E"))
-	}
-	mu.v <- mcl.o$param$mean
+  sampleID <- rownames(fate_prob)
+  cellfate <- colnames(fate_prob)
+  #fate_prob <- fate_prob %*% diag(1/colMeans(fate_prob))
+  #fate_prob <- diag(1/rowSums(fate_prob)) %*% fate_prob
+  rownames(fate_prob) <- sampleID
+  colnames(fate_prob) <- cellfate
+  fateprob.v <- log2(1.000001+ fate_prob / (1.000001 - fate_prob))
+  if(diffvar == TRUE){
+    ## default assumes different variance for clusters
+    mcl.o <- Mclust(fateprob.v, G = maxState)
+  }
+  else {
+    mcl.o <- Mclust(fateprob.v, G = maxState, modelNames = c("E"))
+  }
+  mu.v <- mcl.o$param$mean
+  for(i in 1:nrow(mu.v)){
+    if(nrow(mu.v) == 2){
+      mu.v[i,] <- mu.v[i,] / mcl.o$param$mean[-i,]
+    }else{
+      mu.v[i,] <- mu.v[i,] / colMeans(mcl.o$param$mean[-i,])
+    }
+  }
+  colnames(mu.v) <- paste0("cluster",1:ncol(mu.v))
+  class <- mcl.o$classification
+  class <- paste0("cluster",class)
+  print(mu.v)
+  if(unique_assign){
+    writeLines("Unique assign cell state into a specific lineage...")
+    label <- NULL
+    for(i in 1:ncol(mu.v)){
+      if(max(mu.v[,i])>cut_off){
+        label <- c(label, rownames(mu.v)[which.max(mu.v[,i])])
+      }else{
+        label <- c(label,"uncertain")
+      }
+    }
+    lineage_list <- list()
+    drop_fate <- NULL
     for(i in 1:nrow(mu.v)){
-		if(nrow(mu.v) == 2){
-		  mu.v[i,] <- mu.v[i,] / mcl.o$param$mean[-i,]
-		}else{
-		  mu.v[i,] <- mu.v[i,] / colMeans(mcl.o$param$mean[-i,])
-		}
-	}
-	colnames(mu.v) <- paste0("cluster",1:ncol(mu.v))
-	class <- mcl.o$classification
-	class <- paste0("cluster",class)
-	print(mu.v)
-	if(unique_assign){
-	writeLines("Unique assign cell state into a specific lineage...")
-	label <- NULL
-	for(i in 1:ncol(mu.v)){
-	  if(max(mu.v[,i])>cut_off){
-	     label <- c(label, rownames(mu.v)[which.max(mu.v[,i])])
-	  }else{
-	    label <- c(label,"uncertain")
-	  }
-	}
-	lineage_list <- list()
-	drop_fate <- NULL
-	for(i in 1:nrow(mu.v)){
-	  lineage_list[[i]] <- colnames(mu.v)[which(label %in% c("uncertain",rownames(mu.v)[i]))]
-	  lineage_list[[i]] <- rownames(fate_prob)[which(class %in% lineage_list[[i]])]
-	  if(length(lineage_list[[i]])==0) drop_fate <- c(drop_fate,i)
-	}
-	names(lineage_list) <- rownames(mu.v)
-	if(!is.null(drop_fate))lineage_list <- lineage_list[-drop_fate]
-	}else{
-	writeLines("Allow shared cell state between different lineage...")
-	label_list <- list()
-	for(i in 1:nrow(mu.v)){
-	  label_list[[i]] <- colnames(mu.v)[which(mu.v[i,]>cut_off)]
-	}
-	uncertain_cellstate <- colnames(mu.v)[colnames(mu.v) %in% unique(unlist(label_list)) == FALSE]
-	for(i in 1:nrow(mu.v)) label_list[[i]] <- c(label_list[[i]],uncertain_cellstate)
+      lineage_list[[i]] <- colnames(mu.v)[which(label %in% c("uncertain",rownames(mu.v)[i]))]
+      lineage_list[[i]] <- rownames(fate_prob)[which(class %in% lineage_list[[i]])]
+      if(length(lineage_list[[i]])==0) drop_fate <- c(drop_fate,i)
+    }
+    names(lineage_list) <- rownames(mu.v)
+    if(!is.null(drop_fate))lineage_list <- lineage_list[-drop_fate]
+  }else{
+    writeLines("Allow shared cell state between different lineage...")
+    label_list <- list()
+    for(i in 1:nrow(mu.v)){
+      label_list[[i]] <- colnames(mu.v)[which(mu.v[i,]>cut_off)]
+    }
+    uncertain_cellstate <- colnames(mu.v)[colnames(mu.v) %in% unique(unlist(label_list)) == FALSE]
+    for(i in 1:nrow(mu.v)) label_list[[i]] <- c(label_list[[i]],uncertain_cellstate)
 
-	lineage_list <- list()
-	drop_fate <- NULL
-	for(i in 1:nrow(mu.v)){
-	  lineage_list[[i]] <- label_list[[i]]
-	  lineage_list[[i]] <- rownames(fate_prob)[which(class %in% lineage_list[[i]])]
-	  if(length(lineage_list[[i]])==0) drop_fate <- c(drop_fate,i)
-	}
-	names(lineage_list) <- rownames(mu.v)
-	if(!is.null(drop_fate))lineage_list <- lineage_list[-drop_fate]
-	}
-	lineage_list
+    lineage_list <- list()
+    drop_fate <- NULL
+    for(i in 1:nrow(mu.v)){
+      lineage_list[[i]] <- label_list[[i]]
+      lineage_list[[i]] <- rownames(fate_prob)[which(class %in% lineage_list[[i]])]
+      if(length(lineage_list[[i]])==0) drop_fate <- c(drop_fate,i)
+    }
+    names(lineage_list) <- rownames(mu.v)
+    if(!is.null(drop_fate))lineage_list <- lineage_list[-drop_fate]
+  }
+  lineage_list
 }
 
 Sketching <- function(exp.m,varID_obj,var,n_cell,sketch.method,ndim){
