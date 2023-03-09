@@ -34,7 +34,7 @@ pip install numpy==1.23.5, palantir
 ```
 devtools::install_github("learn-ensemble/R-SUMMA")
 ```
-### install cytotrace and scent to determine the root cell
+#### install cytotrace and scent to determine the root cell
 ```
 devtools::install_github("aet21/SCENT")
 ```
