@@ -31,7 +31,6 @@ FateDynamic <- function(sce,global_params = list(),palantir_params = list(),cell
   env = environment()
 
   suppressPackageStartupMessages(require("scran"))
-  suppressPackageStartupMessages(require("scater"))
   suppressPackageStartupMessages(require("irlba"))
   suppressPackageStartupMessages(require("rsvd"))
   suppressPackageStartupMessages(require("reticulate"))
