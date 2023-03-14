@@ -11,7 +11,7 @@ See Jupyter Notebooks in notebook folder
 ### Basic installation
 #### Create conda environment (recommand but not necessary)
 ```
-conda create --name NetID python=3.8 r-essentials r-base
+conda create --name NetID python r-essentials r-base
 conda activate NetID # if it encounter the error, run 'source activate' ahead of this code
 ```
 #### Install geosketch
