@@ -14,8 +14,9 @@ See Jupyter Notebooks in notebook folder
 conda create --name NetID python r-essentials r-base
 conda activate NetID # if it encounter the error, run 'source activate' ahead of this code
 ```
-#### Install geosketch
+#### Install devtools and geosketch
 ```
+conda install -c conda-forge r-devtools
 pip install geosketch
 ```
 #### install NetID
