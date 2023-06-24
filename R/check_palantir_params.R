@@ -9,6 +9,9 @@
 #' @param start_cell
 #' the barcode or ID of root cell, default: NULL
 #'
+#' @param terminal_state
+#' the terminal cell type labels
+#'
 #' @param nwps
 #' number for waypoint sampling, default: 500
 #'
@@ -27,6 +30,7 @@ check_palantir_params <- function(params){
   params_space <- list(
     ndcs = 10,
 	start_cell = NULL,
+	terminal_state = NULL,
 	nwps = 500,
 	method = "scent",
 	species = 10090,

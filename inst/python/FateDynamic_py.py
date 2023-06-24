@@ -26,6 +26,7 @@ parser.add_argument("-k","--knn",default=30,type=int,help="the number of nearest
 parser.add_argument("-pl","--palantir",choices = ('True','False'),default='True',type=str,help="using palantir to perform fate prediction")
 parser.add_argument("-dc","--dcs",default=10,type=int,help="the number of diffusion components used in palantir")
 parser.add_argument("-r","--root",default=None,type=str,help="the id of root cell")
+parser.add_argument("-ts","--terminalstate",nargs='+', help="the name of terminal states")
 parser.add_argument("-nw","--nwps",default=500,type=int,help="the number of waypoints")
 parser.add_argument("-mo","--mode",default="dynamical",type=str,help="the mode of RNA velocity")
 parser.add_argument("-p","--plot",choices = ('True','False'),default='True',type=str,help="output the velocity stream embedding plot")
@@ -45,6 +46,7 @@ knn = args["knn"]
 palantir_model = args["palantir"] == 'True'
 ndcs = args["dcs"]
 root = args["root"]
+terminal_state = args["terminalstate"]
 num_waypoints = args["nwps"]
 mode = args["mode"]
 plot = args["plot"] == 'True'
@@ -71,6 +73,48 @@ logging.info("ncores:"+str(ncores))
 logging.info("tol:"+str(tol))
 
 ############################ function ################################
+from itertools import compress
+
+def purity_w(ad,label,cell_type):
+    
+    indices = np.where(ad.obs[label] == cell_type)[0]
+    g = ad.obsp["connectivities"].toarray()
+    ss = []
+    for i in indices:
+        index = ad.obs[label][g[i,:]>0]
+        if len(index) == 0:
+            score = 0
+        else:
+            score = (index == cell_type).sum() / len(index)
+        score = score*len(index)
+        ss.append(score)
+    
+    return ss
+
+def terminal_index(ad,label,terminal_state, n_pc = 20):
+    #n_pc = ad.obsm["X_pca"].shape[1]
+    res = pd.DataFrame(columns=[m+str(n) for m,n in zip(["PC"]*n_pc,range(n_pc))], index=terminal_state) 
+    cell_index = []
+    for clust in terminal_state: 
+        w = purity_w(ad,label,clust)
+        w = w/sum(w)
+        w = [w[i]**10 for i in range(len(w))]
+        indices = ad.obs.index[np.where(ad.obs[label] == clust)[0]].tolist()
+        pc = ad[[i in indices for i in ad.obs.index.tolist()],:].obsm["X_pca"][:,:n_pc]
+        base = np.average(pc, axis=0, weights=w)
+        
+        ## find the cloest cell
+        dist = ((pc - np.array(base))**2).sum(1)
+        dist = np.sqrt(np.array(dist).astype(np.float64))
+        cell_index += list(compress(indices,dist == np.min(dist)))
+        
+    states = pd.Series(
+        cell_index,
+        index=terminal_state,
+    )
+    
+    return states
+    
 def plot_palantir_results(pr_res, tsne,writekey,save,s=3):
     """ Plot Palantir results on tSNE
     """
@@ -134,6 +178,13 @@ if palantir_model:
     pr_res = palantir.core.run_palantir(ms_data, root, num_waypoints=num_waypoints)
     pr_res.branch_probs.columns = ad.obs[cluster_label][pr_res.branch_probs.columns].values
     
+    if terminal_state is not None:
+        sc.pp.neighbors(ad, n_pcs=npcs, n_neighbors=knn)
+        states = terminal_index(ad,cluster_label,terminal_state,npcs)
+        pr_res = palantir.core.run_palantir(ms_data, root, states, num_waypoints=num_waypoints)
+    else:
+        pr_res = palantir.core.run_palantir(ms_data, root, num_waypoints=num_waypoints)
+        
     fate_prob = pr_res._branch_probs
     pseudotime = pr_res._pseudotime
     if plot:

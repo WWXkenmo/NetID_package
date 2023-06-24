@@ -11,6 +11,8 @@ check_palantir_params(params)
 
 \item{start_cell}{the barcode or ID of root cell, default: NULL}
 
+\item{terminal_state}{the terminal cell type labels}
+
 \item{nwps}{number for waypoint sampling, default: 500}
 
 \item{method}{specific a method to find the root cell, three options includes: "scent","cytotrace" and "markergene"}
