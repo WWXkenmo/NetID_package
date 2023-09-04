@@ -21,7 +21,7 @@ pip install geosketch
 ```
 #### install NetID
 ```
-devtools::install_github("WWXKenmo/NetID_package")
+install.packages('NetID_0.1.0.tar.gz', repos=NULL, type='source')
 ```
 ### Advance installation
 #### install cellrank and palantir to realize lineage-specific GRN prediction
