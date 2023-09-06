@@ -1,141 +1,131 @@
-#' @title Run NetID model
+#' @title Run NetID Model
 #'
-#' @description This function is for generating the weighted gene regulatory network (GRN). NetID first sample the cells on the PCA space to make sure the sampled cell could cover the whole manifold. Then aggregate the neighbourhoods around each sampled cells on pruned KNN graph. And in the end run GENIE3 algorithm on the aggregated gene expression profile. The sampling and rational aggregation would make cells denoise and maintain the major variation, and speed up the GRN generating process.
+#' @description This function generates the weighted gene regulatory network (GRN) using the NetID algorithm. NetID first samples the cells on the PCA space to ensure coverage of the whole manifold. It then aggregates the neighborhoods around each sampled cell on the pruned KNN graph. Finally, the GENIE3 algorithm is run on the aggregated gene expression profiles. The sampling and rational aggregation help denoise cells, maintain major variation, and speed up the GRN generation process.
 #'
 #' @param sce
-#' A SingleCellExperiment object need to contain the "count" assay,
-#' if it contains the "spliced" and "unspliced" assay, the NetID would run on "spliced" assay
+#' A SingleCellExperiment object that needs to contain the "count" assay. If it also contains the "spliced" and "unspliced" assays, NetID will run on the "spliced" assay.
 #'
 #' @param min_counts
-#' minimum detected counts for genes, the genes which has counts > min_counts would be preserved
-#' Default: 10
+#' Minimum detected counts for genes. Genes with counts > min_counts will be preserved.
+#' Default: 10.
 #'
 #' @param varID_res
-#' input if user already have varID object in the experiment, otherwise need to run pruneKnn algorithm
-#' Default: NULL
+#' Input if the user already has a varID object in the experiment; otherwise, pruneKnn algorithm needs to be run.
+#' Default: NULL.
 #'
 #' @param knn
-#' number of nearest neighbourhoods
-#' Default: 30
+#' Number of nearest neighbors.
+#' Default: 30.
 #'
 #' @param regulators
-#' a gene list contains the feature names of regulators
+#' A gene list containing the feature names of regulators.
 #'
 #' @param targets
-#' a gene list contains the feature names of targets
+#' A gene list containing the feature names of targets.
 #'
 #' @param netID_params
-#' a list object could manually set the parameter for the core algorithm of netID
-#' see the details of parameters through ?check_netID_params
+#' A list object that can manually set the parameters for the core algorithm of NetID. Refer to the details of parameters using ?check_netID_params.
 #'
 #' @param velo
-#' if use the fate probability inferred results from RNA velocity based method (cellrank), make sure you have run FateDynamic function
-#' before you want to set this parameter = True
-#' Default: FALSE
+#' If using fate probability inferred results from RNA velocity based method (cellrank), make sure you have run the FateDynamic function before setting this parameter to TRUE.
+#' Default: FALSE.
 #'
 #' @param dynamicInfer
-#' if use the fate probability inferred results, make sure you have run FateDynamic function before you want to set this parameter = TRUE
-#' Default: FALSE
+#' If using the fate probability inferred results, make sure you have run the FateDynamic function before setting this parameter to TRUE.
+#' Default: FALSE.
 #'
 #' @param maxState
-#' NetID would assign the cells to a cell fate (lineage) though clustering the cells according to the fate probability. Internally, NetID
-#' would use Gaussain Mixture Model, and it would use BIC to choose optimal number of clusters. User need to set the maximum number of clusters.
-#' Default: 5
+#' NetID assigns cells to cell fates (lineages) by clustering the cells according to fate probability. Internally, NetID uses Gaussian Mixture Model and BIC to choose the optimal number of clusters. User needs to set the maximum number of clusters.
+#' Default: 5.
 #'
 #' @param cut_off
-#' Each cluster would assign to a cell fate through comparing the fate probability fold change (e.g. cell fate A vs. others), a cell fate with
-#' fold change > cut_off would be assigned to the corresponding cluster
-#' Default: 2
+#' Each cluster is assigned to a cell fate by comparing fate probability fold change (e.g. cell fate A vs. others). A cell fate with fold change > cut_off is assigned to the corresponding cluster.
+#' Default: 2.
 #'
 #' @param unique_assign
-#' if uniquely assign the cell fate to each cluster
-#' Default: FALSE
+#' If uniquely assigning the cell fate to each cluster.
+#' Default: FALSE.
 #'
 #' @param restart
-#' RunNetID would automatically run the pruneKnn if it couldn't find the VarID_res.rds in the working directory. if VarID_res.rds already have
-#' and user still want to re-run the pruneKnn, set the restart = TRUE
-#' Default: FALSE
+#' RunNetID will automatically run pruneKnn if it can't find the VarID_res.rds in the working directory. If VarID_res.rds already exists and the user still wants to re-run pruneKnn, set restart = TRUE.
+#' Default: FALSE.
 #'
 #' @param work_dir
-#' user could specific the working directory through input the address, and the varID object (pruneKnn) would be saved in this directory.
-#' Otherwise the local working directory would be used (getwd())
-#' Default: NULL
+#' Users can specify the working directory by inputting the address, and the varID object (pruneKnn) will be saved in this directory. Otherwise, the local working directory will be used (getwd()).
+#' Default: NULL.
 #'
 #' @param no_cores
-#' The number of cores would be used. Default: 4
+#' The number of cores to be used. Default: NULL.
 #'
-#'
-#' @return a list contains following objects
+#' @return A list containing the following objects:
 #' @param fate_prob
-#' cell fate probability matrix learned by palantir, only be saved when dynamicInfer = TRUE
+#' Cell fate probability matrix learned by palantir, saved only when dynamicInfer = TRUE.
 #'
 #' @param LineageClass
-#' the assigment of lineage type to each cell. The palantir fate probability matrix is used when perform assignment
+#' The assignment of lineage type to each cell. The palantir fate probability matrix is used for assignment.
 #'
 #' @param fate_prob_velo
-#' cell fate probability matrix learned by palantir, only be saved when dynamicInfer = TRUE
+#' Cell fate probability matrix learned by palantir, saved only when dynamicInfer = TRUE.
 #'
 #' @param LineageClass_velo
-#' the assigment of lineage type to each cell. The cellrank fate probability matrix is used when perform assignment
+#' The assignment of lineage type to each cell. The cellrank fate probability matrix is used for assignment.
 #'
 #' @param pseudotime
-#' the pseudotime for each cell. pseudotime is learned by palantir
+#' The pseudotime for each cell, learned by palantir.
 #'
 #' @param velocity_pseudotime
-#' the pseudotime for each cell. pseudotime is learned by RNA velocity (scVelo)
+#' The pseudotime for each cell, learned by RNA velocity (scVelo).
 #'
 #' @param GEP
-#' NetID inferred aggregated profile on sampling dataset, user could manually choose their GRN inference method and run on this expression profile
+#' NetID inferred aggregated profile on the sampling dataset. Users can manually choose their GRN inference method and run it on this expression profile.
 #'
 #' @param velo_m and velo_m_aggregate
-#' the velocity matrix
+#' The velocity matrix.
 #'
 #' @param skeleton
-#' a gene regulatory network skeleton (a binary matrix with 1 indicate have regulation)
+#' A gene regulatory network skeleton (a binary matrix with 1 indicating regulation).
 #'
 #' @param varID_res
-#' a varID object generated by pruneKnn
-#'
+#' A varID object generated by pruneKnn.
 #'
 #' @examples
 #' \dontrun{
-#' dyn.out <- RunNetID(sce,regulators = TF, targets = TF,netID_params = list(normalize=FALSE,n_cell = 5000),velo=FALSE,dynamicInfer = FALSE)
+#' dyn.out <- RunNetID(sce, regulators = TF, targets = TF, netID_params = list(normalize = FALSE, n_cell = 5000), velo = FALSE, dynamicInfer = FALSE)
 #' }
 #'
 #' @export
 #'
 #' @title A check function for NetID
 #'
-#' @description a check function for RunNetID function.
-#' RunNetID have provided netID_params, user could specific the parameters the want, the parameters are listed as follow
+#' @description A check function for the RunNetID function. RunNetID provides netID_params; users can specify the desired parameters, which are listed as follows:
 #'
 #' @param var
-#' if using variable gene to calculate principal components, used by geosketch method, default: FALSE
+#' If using variable gene to calculate principal components, used by geosketch method. Default: FALSE.
 #'
 #' @param sampled_cells
-#' the barcode or ID of sampled cells
+#' The barcode or ID of sampled cells.
 #'
 #' @param sketch.method
-#' perform sketching sampling on single cell datasets, "geosketch" or "SeuratSketching"
+#' Perform sketching sampling on single cell datasets: "geosketch" or "SeuratSketching".
 #'
 #' @param ndim
-#' dimensions of PCs, used by geosketch method, Default: 30
+#' Dimensions of PCs, used by geosketch method. Default: 30.
 #'
 #' @param n_cell
-#' the number of sampled cells, default: 500
+#' The number of sampled cells. Default: 500.
 #'
 #' @param Threshold_Num
-#' the minimum nn of each seed cells after assignments, default: 2
+#' The minimum number of nearest neighbors of each seed cell after assignments. Default: 2.
 #'
 #' @param normalize
-#' if perform normalization to the count matrix, default: FALSE
+#' If performing normalization to the count matrix. Default: FALSE.
 #'
 #' @param prior_net
-#' if a binary matrix indicate the prior knowledge of gene regulation, row is the regulator, column is the target.
+#' A binary matrix indicating the prior knowledge of gene regulation, where rows are regulators and columns are targets.
 #'
 #' @export
 #'
-RunNetID <- function(sce,min_counts = 10,varID_res=NULL, knn = 30, regulators = NULL, targets = NULL,netID_params = list(), velo=TRUE,dynamicInfer=TRUE,maxState = 5,cut_off = 2,work_dir = NULL){
+RunNetID <- function(sce,min_counts = 10,varID_res=NULL, knn = 30, regulators = NULL, targets = NULL,netID_params = list(), velo=TRUE,dynamicInfer=TRUE,maxState = 5,cut_off = 2,work_dir = NULL, no_cores = NULL){
   if(!is.null(work_dir)){setwd(work_dir)}
   suppressPackageStartupMessages(require("mclust"))
   suppressPackageStartupMessages(require("GENIE3"))
@@ -143,26 +133,71 @@ RunNetID <- function(sce,min_counts = 10,varID_res=NULL, knn = 30, regulators = 
   env = environment()
   netID_params <- check_netID_params(netID_params)
   list2env(netID_params,env)
-
-  sce <- sce[,colSums(assays(sce)$spliced)>0]
-  X <- assays(sce)$spliced
+  
+  
+  ## input object: SingleCellExperiments, SCseq or Seurat
+  if(class(sce) %in% c("SCseq","Seurat","SingleCellExperiment") == FALSE){
+	   stop("input object needs to be SCseq,Seurat or SingleCellExperiment object, please check again!")
+  }
+  writeLines(paste("Input object is ",class(sce),"...",sep=""))
+  if(class(sce) == "SingleCellExperiment"){
+    a = "counts" %in% names(SummarizedExperiment::assays(sce))
+	b = "spliced" %in% names(SummarizedExperiment::assays(sce))
+    if (a){
+	   sce <- sce[,colSums(as.matrix(SummarizedExperiment::assays(sce)$counts))>0]
+	   X <- as.matrix(SummarizedExperiment::assays(sce)$counts)
+	}
+	if (b){
+	   sce <- sce[,colSums(as.matrix(SummarizedExperiment::assays(sce)$spliced))>0]
+	   X <- as.matrix(SummarizedExperiment::assays(sce)$spliced)
+	}
+	if (!a & !b){
+	   stop("SingleCellExperiment object has no spliced or counts assay, please check again!")
+	}
+  }
+  if(class(sce) == "Seurat"){
+    a = "RNA" %in% names(sce@assays)
+	b = "spliced" %in% names(sce@assays)
+	if (a){
+	   sce <- sce[,colSums(as.matrix(Seurat::GetAssayData(sce,assay = "RNA",slot = "counts")))>0]
+	   X <- as.matrix(Seurat::GetAssayData(sce,assay = "RNA",slot = "counts"))
+	}
+	if (b){
+	   sce <- sce[,colSums(as.matrix(Seurat::GetAssayData(sce,assay = "spliced",slot = "counts")))>0]
+	   X <- as.matrix(Seurat::GetAssayData(sce,assay = "spliced",slot = "counts"))
+	}
+	if (!a & !b){
+	   stop("SingleCellExperiment object has no spliced or RNA assay, please check again!")
+	}
+  }
+  if(class(sce) == "SCseq"){
+      X <- as.matrix(RaceID::getExpData(sce))
+	  X <- X[,colSums(X)>0]
+	  if(velo & dynamicInfer){
+	    warning("Using velocity dynamic information, but SCseq only save one assay, better use SingleCellExperiment and Seurat!")
+	  }
+  }
+  
   X <- X[!duplicated(rownames(X)),]
   X <- X[,colSums(X)>0]
+  if (is.null(g)){
   g <- rownames(X)[rowSums(X)>min_counts]
+  }
+  
 
   if(dynamicInfer){
     sc <- reticulate::import('scanpy', convert = FALSE)
     adata_exp <- sc$read_h5ad("./output/FateRes.h5ad")
     if(velo){
       adata_velo <- sc$read_h5ad("./output_velo/FateRes.h5ad")
-      velo_m <- t(py_to_r(adata_velo$layers["velocity"]))
-      rownames(velo_m) <- rownames(py_to_r(adata_velo$var))
-      colnames(velo_m) <- rownames(py_to_r(adata_velo$obs))
+      velo_m <- t(reticulate::py_to_r(adata_velo$layers["velocity"]))
+      rownames(velo_m) <- rownames(reticulate::py_to_r(adata_velo$var))
+      colnames(velo_m) <- rownames(reticulate::py_to_r(adata_velo$obs))
     }
 
-    GEP <- t(py_to_r(adata_exp$X))
-    rownames(GEP) <- rownames(py_to_r(adata_exp$var))
-    colnames(GEP) <- rownames(py_to_r(adata_exp$obs))
+    GEP <- t(reticulate::py_to_r(adata_exp$X))
+    rownames(GEP) <- rownames(reticulate::py_to_r(adata_exp$var))
+    colnames(GEP) <- rownames(reticulate::py_to_r(adata_exp$obs))
     g <- rownames(GEP)
   }
 
@@ -174,7 +209,19 @@ RunNetID <- function(sce,min_counts = 10,varID_res=NULL, knn = 30, regulators = 
       varID_res <- readRDS("varID_res.rds")
     }else{
       writeLines("Build VarID object...")
-      varID_res   <- pruneKnn(X[g,],knn=as.numeric(knn),no_cores=4, pca.scale = TRUE, FSelect = TRUE)
+      if (is.null(no_cores)){
+            no_cores <- max(1, parallel::detectCores() - 2)
+      }
+      no_cores <- min(no_cores, parallel::detectCores())
+	  
+	  if (SNN) {
+	    if (class(sce) != "Seurat"){stop("SNN requires input Seurat object!")}else{
+		  writeLines("Perform pruning on Seurat SNN graph...")
+		  varID_res   <- RaceID::pruneKnn(sce[g,],do.prune = do.prune, no_cores=no_cores, pca.scale = TRUE, FSelect = TRUE)
+		}
+	  }else{
+      varID_res   <- RaceID::pruneKnn(X[g,],knn=as.numeric(knn),do.prune = do.prune, no_cores=no_cores, pca.scale = TRUE, FSelect = TRUE)
+	  }
       saveRDS(varID_res,file="varID_res.rds")
     }
   }
@@ -188,7 +235,7 @@ RunNetID <- function(sce,min_counts = 10,varID_res=NULL, knn = 30, regulators = 
     ## extract phase information from velocity vector
     ## load normalized GEP
     # load fate probability
-    fate_prob <- py_to_r(adata_exp$obs)
+    fate_prob <- reticulate::py_to_r(adata_exp$obs)
     ID <- colnames(fate_prob)[-ncol(fate_prob)]
     barcode <- rownames(fate_prob)
     fate_prob <- as.matrix(fate_prob[,-ncol(fate_prob)])
@@ -196,7 +243,7 @@ RunNetID <- function(sce,min_counts = 10,varID_res=NULL, knn = 30, regulators = 
     colnames(fate_prob) <- ID
 
     if(velo){
-      fate_prob_velo <- py_to_r(adata_velo$obs)
+      fate_prob_velo <- reticulate::py_to_r(adata_velo$obs)
       ID <- colnames(fate_prob_velo)[-ncol(fate_prob_velo)]
       barcode <- rownames(fate_prob_velo)
       fate_prob_velo <- as.matrix(fate_prob_velo[,-ncol(fate_prob_velo)])
@@ -227,12 +274,12 @@ RunNetID <- function(sce,min_counts = 10,varID_res=NULL, knn = 30, regulators = 
     }
 
     ########
-    pseudotime <- py_to_r(adata_exp$obs)$pseudotime
-    names(pseudotime) <- rownames(py_to_r(adata_exp$obs))
+    pseudotime <- reticulate::py_to_r(adata_exp$obs)$pseudotime
+    names(pseudotime) <- rownames(reticulate::py_to_r(adata_exp$obs))
 
     if(velo){
-      velocity_pseudotime <- py_to_r(adata_velo$obs)$velocity_pseudotime
-      names(velocity_pseudotime) <- rownames(py_to_r(adata_velo$obs))
+      velocity_pseudotime <- reticulate::py_to_r(adata_velo$obs)$velocity_pseudotime
+      names(velocity_pseudotime) <- rownames(reticulate::py_to_r(adata_velo$obs))
     }
   }
   ########
@@ -254,11 +301,6 @@ RunNetID <- function(sce,min_counts = 10,varID_res=NULL, knn = 30, regulators = 
 
 
 RunNetID2 <- function(spliced, varID_obj,var=FALSE, sampled_cells=NULL,sketch.method = "SeuratSketching",ndim = 50, n_cell = 500, Threshold_Num = 5, regulators = NULL, targets = NULL,normalize=TRUE,prior_net = NULL){
-  suppressPackageStartupMessages(require(Matrix))
-  suppressPackageStartupMessages(require(reticulate))
-  suppressPackageStartupMessages(require(rsvd))
-  suppressPackageStartupMessages(require(Seurat))
-  suppressPackageStartupMessages(require(GENIE3))
 
   ### perform geosketch sampling on expression profile
   if(is.null(sampled_cells)){
@@ -271,7 +313,7 @@ RunNetID2 <- function(spliced, varID_obj,var=FALSE, sampled_cells=NULL,sketch.me
     id <- sampled_cells}
 
   x  <- t(varID_obj$NN)[id,]
-  y  <- Matrix(rep(0,ncol(varID_obj$NN)*length(id)), ncol=ncol(varID_obj$NN))
+  y  <- Matrix::Matrix(rep(0,ncol(varID_obj$NN)*length(id)), ncol=ncol(varID_obj$NN))
   rownames(y) <- rownames(x)
   colnames(y) <- colnames(varID_obj$NN)
 
@@ -290,7 +332,7 @@ RunNetID2 <- function(spliced, varID_obj,var=FALSE, sampled_cells=NULL,sketch.me
 
   pvalue <- 0
   x  <- t(varID_obj$NN)[id,]
-  y  <- Matrix(rep(0,ncol(varID_obj$NN)*length(id)), ncol=ncol(varID_obj$NN))
+  y  <- Matrix::Matrix(rep(0,ncol(varID_obj$NN)*length(id)), ncol=ncol(varID_obj$NN))
   rownames(y) <- rownames(x)
   colnames(y) <- colnames(varID_obj$NN)
 
@@ -341,12 +383,12 @@ RunNetID2 <- function(spliced, varID_obj,var=FALSE, sampled_cells=NULL,sketch.me
   #########################################
   writeLines(paste("aggregated matrix: the number of genes:",nrow(ks.final),"; the number of samples:",ncol(ks.final),sep=""))
 
-  g_c <- GENIE3(log2(ks.final+1),nCores=12,verbose=TRUE,nTrees=500,regulators = regulators, targets = targets)
+  g_c <- GENIE3::GENIE3(log2(ks.final+1),nCores=12,verbose=TRUE,nTrees=500,regulators = regulators, targets = targets)
 
 
   ### filtering the network according to the weight
   g_c_raw <- g_c
-  library(Matrix)
+  
   g_c[g_c<0.001] <- 0
   g_count <- g_c
   g_count[g_count!=0] <- 1
@@ -385,10 +427,10 @@ LineageClassifer <- function(fate_prob,cut_off=2,maxState = 5, diffvar=TRUE, uni
   fateprob.v <- log2(1.000001+ fate_prob / (1.000001 - fate_prob))
   if(diffvar == TRUE){
     ## default assumes different variance for clusters
-    mcl.o <- Mclust(fateprob.v, G = maxState)
+    mcl.o <- mclust::Mclust(fateprob.v, G = maxState)
   }
   else {
-    mcl.o <- Mclust(fateprob.v, G = maxState, modelNames = c("E"))
+    mcl.o <- mclust::Mclust(fateprob.v, G = maxState, modelNames = c("E"))
   }
   mu.v <- mcl.o$param$mean
   for(i in 1:nrow(mu.v)){
@@ -448,9 +490,9 @@ Sketching <- function(exp.m,varID_obj,var,n_cell,sketch.method,ndim){
   #pca <- t(apply(pca,1,function(x){x/norm(x,"2")}))
   sample_m <- NULL
   if(sketch.method == "SeuratSketching"){
-    object <- CreateSeuratObject(exp.m)
-    object <- NormalizeData(object)
-    object <- FindVariableFeatures(object)
+    object <- Seurat::CreateSeuratObject(exp.m)
+    object <- Seurat::NormalizeData(object)
+    object <- Seurat::FindVariableFeatures(object)
   }
   if(sketch.method == "geosketch"){
     if(!is.null(ndim)){
@@ -462,8 +504,8 @@ Sketching <- function(exp.m,varID_obj,var,n_cell,sketch.method,ndim){
     }
     if(var){X = t(log(exp.m[varID_obj$B$genes,]+1))}else{
       X = t(log(exp.m[rownames(varID_obj$regData$pearsonRes),]+1))}
-    geosketch <- import('geosketch')
-    s <- rsvd(X, k=ndim)
+    geosketch <- reticulate::import('geosketch')
+    s <- rsvd::rsvd(X, k=ndim)
     pca <- s$u %*% diag(s$d)
   }
 
@@ -472,7 +514,7 @@ Sketching <- function(exp.m,varID_obj,var,n_cell,sketch.method,ndim){
     sketch.indices <- geosketch$gs(X.pcs, as.integer(n_cell), one_indexed = TRUE)
   }
   if(sketch.method == "SeuratSketching"){
-    atoms <- LeverageScoreSampling(object = object, num.cells = n_cell)
+    atoms <- Seurat::LeverageScoreSampling(object = object, num.cells = n_cell)
     sketch.indices <- which(colnames(object) %in% colnames(atoms))
   }
   if(sketch.method == "random"){
@@ -480,46 +522,4 @@ Sketching <- function(exp.m,varID_obj,var,n_cell,sketch.method,ndim){
   }
   sketch.indices <- unlist(sketch.indices)
   sketch.indices
-}
-
-
-ExplaineVariance <- function(mat,refMat){
-  var <- NULL
-  for(i in 1:ncol(refMat)){
-    data <- cbind(refMat[,i],mat)
-    colnames(data) <- c("y",colnames(mat))
-    data <- as.data.frame(data)
-    lm <- lm(y~., data)
-    var <- c(var, cor(lm$fitted.value, refMat[,i])^2)
-  }
-  mean(var)
-}
-
-Manifold_Ratio <- function(NN,sketch.indices){
-  nn_set <- as.integer(as.numeric(NN[,sketch.indices]))
-  nn_set <- unique(nn_set)
-  length(nn_set) / ncol(NN)
-}
-
-SampleScore <- function(exp.m,TF,varID_obj,gep_list){
-  refMat <- rARPACK::svds(exp.m[TF,],10)$u
-  rownames(refMat) <- TF
-  pca <- t(varID_obj$dimRed)
-  score <- score2 <- score3 <- NULL
-  for(i in 1:length(gep_list)){
-    sketch.indices <- which(colnames(exp.m) %in% colnames(gep_list[[i]]))
-    score <- c(score,ExplaineVariance(exp.m[TF,sketch.indices],refMat[TF,]))
-    score2 <- c(score2, hausdorff_dist(pca[sketch.indices,],pca[-sketch.indices,]))
-    score3 <- c(score3, Manifold_Ratio(varID_obj$NN,sketch.indices))
-  }
-  score <- rankScore2(score)
-  score2 <- rankScore2(-score2)
-  score3 <- rankScore2(score3)
-  score+score2+score3
-}
-
-rankScore2 <- function(score){
-  #score <- abs(score)
-  score <- (1/(rank(-score))^2)
-  score
 }

@@ -2,26 +2,26 @@
 % Please edit documentation in R/check_palantir_params.R
 \name{check_palantir_params}
 \alias{check_palantir_params}
-\title{A check function for NetID}
+\title{A Function to Validate NetID Parameters}
 \usage{
 check_palantir_params(params)
 }
 \arguments{
-\item{ndcs}{the number of diffusion components, default: 10}
+\item{ndcs}{The number of diffusion components. Default: 10.}
 
-\item{start_cell}{the barcode or ID of root cell, default: NULL}
+\item{start_cell}{The barcode or ID of the root cell. Default: NULL.}
 
-\item{terminal_state}{the terminal cell type labels}
+\item{terminal_state}{The terminal cell type labels.}
 
-\item{nwps}{number for waypoint sampling, default: 500}
+\item{nwps}{The number for waypoint sampling. Default: 500.}
 
-\item{method}{specific a method to find the root cell, three options includes: "scent","cytotrace" and "markergene"}
+\item{method}{Specify a method to find the root cell. Three options include: "scent", "cytotrace", and "markergene".}
 
-\item{root_gene}{if choose "markergene", please specific the ID of the gene.}
+\item{root_gene}{If choosing "markergene", please specify the ID of the gene.}
 
-\item{plot}{if generate the plots in working directory.}
+\item{plot}{If generating the plots in the working directory.}
 }
 \description{
-a check function for FateDynamic function.
-FateDynamic have provided palantir_params, user could specific the parameters the want, the parameters are listed as follow
+This function validates parameters for the FateDynamic function.
+FateDynamic provides palantir_params; users can specify the desired parameters, which are listed as follows:
 }

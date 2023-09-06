@@ -2,26 +2,26 @@
 % Please edit documentation in R/check_global_params.R
 \name{check_global_params}
 \alias{check_global_params}
-\title{A check function for NetID}
+\title{A Function to Validate NetID Parameters}
 \usage{
 check_global_params(params)
 }
 \arguments{
-\item{min_counts}{Default: 20}
+\item{min_counts}{Default: 20.}
 
-\item{nhvgs}{default: 2000}
+\item{nhvgs}{Default: 2000.}
 
-\item{npcs}{default: 30}
+\item{npcs}{Default: 30.}
 
-\item{knn}{default: 30}
+\item{knn}{Default: 30.}
 
-\item{velo}{if run the velocity model (cellrank), default: TRUE}
+\item{velo}{If the velocity model (cellrank) is run, default: TRUE.}
 
-\item{fate_predict}{default: TRUE}
+\item{fate_predict}{Default: TRUE.}
 
-\item{cluster_label}{specific the attributes in SingleCellExperiment object that contains the cluster label information}
+\item{cluster_label}{Specify the attribute in the SingleCellExperiment object that contains cluster label information.}
 }
 \description{
-a check function for FateDynamic function.
-FateDynamic have provided global_params, user could specific the parameters the want, the parameters are listed as follow
+This function validates parameters for the FateDynamic function.
+FateDynamic provides global_params; users can specify the desired parameters, which are listed as follows:
 }

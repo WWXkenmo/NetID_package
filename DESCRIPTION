@@ -1,6 +1,6 @@
 Package: NetID
 Type: Package
-Title: A scalable method to infer fate specific gene regulatory network from single cell gene expression data
+Title: A Meta-cell Base Method to Infer Fate Specific Gene Regulatory Network from Single Cell Gene Expression Data
 Version: 0.1.0
 biocViews:
 Imports:
@@ -14,17 +14,22 @@ Imports:
     Seurat,
     Hmisc,
     mclust,
-    GENIE3,
     pracma,
     doParallel,
     doRNG,
-    scran,
-    GENIE3,
-    RaceID (>= 0.2.9)
+    RaceID (>= 0.2.9),
+    igraph,
+    rARPACK
+Suggests:
+	GENIE3,
+	SingleCellExperiment,
+	knitr,
+	rmarkdown
+VignetteBuilder: knitr
 Author: Weixu Wang and Dominic Grün
 Maintainer: Weixu Wang <weixu.wang@helmholtz-muenchen.de>
-Description: NetID first sample the cells from single cell data, generate aggregate profile on pruned KNN graph, lead to a better gene expression profile to quantify gene regulations.
-License: MIT
+Description: First sample the cells from single cell data, generate aggregate profile on pruned K-Nearest Neighbor graph, lead to a better gene expression profile to quantify gene regulations.
+License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3

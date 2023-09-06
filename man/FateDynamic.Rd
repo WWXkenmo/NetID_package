@@ -2,7 +2,7 @@
 % Please edit documentation in R/FateDynamic.R
 \name{FateDynamic}
 \alias{FateDynamic}
-\title{A end-to-end fate dynamic inference}
+\title{An End-to-End Fate Dynamic Inference}
 \usage{
 FateDynamic(
   sce,
@@ -13,21 +13,17 @@ FateDynamic(
 )
 }
 \arguments{
-\item{sce}{A SingleCellExperiment object need to contain the "count" assay. "spliced" and "unspliced" assays are required if run cellrank}
+\item{sce}{A SingleCellExperiment object that needs to contain the "count" assay. "spliced" and "unspliced" assays are required if running cellrank.}
 
-\item{global_params}{a list object could manually set the core parameters of FateDynamic
-see the details of parameters through ?check_global_params}
+\item{global_params}{A list object that can manually set the core parameters of FateDynamic. Refer to the details of parameters using ?check_global_params.}
 
-\item{palantir_params}{a list object could manually set the core parameters of palantir
-see the details of parameters through ?check_palantir_params}
+\item{palantir_params}{A list object that can manually set the core parameters of palantir. Refer to the details of parameters using ?check_palantir_params.}
 
-\item{cellrank_params}{a list object could manually set the core parameters of cellrank
-see the details of parameters through ?check_cellrank_params}
+\item{cellrank_params}{A list object that can manually set the core parameters of cellrank. Refer to the details of parameters using ?check_cellrank_params.}
 
-\item{work_dir}{user could specific the working directory through input the address, and the varID object (pruneKnn) would be saved in this directory.
-Otherwise the local working directory would be used (getwd())
-Default: NULL}
+\item{work_dir}{Users can specify the working directory by inputting the address, and the varID object (pruneKnn) will be saved in this directory. Otherwise, the local working directory will be used (getwd()).
+Default: NULL.}
 }
 \description{
-A end-to-end cell dynamic inference. Run this function before RunNetID, if set dynamicInfor in RunNetID equal to TRUE.
+This function provides an end-to-end cell dynamic inference process. Run this function before RunNetID, if you set dynamicInfor in RunNetID equal to TRUE.
 }

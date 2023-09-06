@@ -2,28 +2,34 @@
 % Please edit documentation in R/check_netID_params.R
 \name{check_netID_params}
 \alias{check_netID_params}
-\title{A check function for NetID}
+\title{A Function to Validate NetID Parameters}
 \usage{
 check_netID_params(params)
 }
 \arguments{
-\item{var}{if using variable gene to calculate principal components, used by geosketch method, default: FALSE}
+\item{g}{Manually set the genes users want to analyze in their dataset. Default: NULL.}
 
-\item{sampled_cells}{the barcode or ID of sampled cells}
+\item{var}{If using variable genes to calculate principal components, used by the geosketch method. Default: FALSE.}
 
-\item{sketch.method}{perform sketching sampling on single cell datasets, "geosketch" or "SeuratSketching"}
+\item{do.prune}{If prune KNN graph.}
 
-\item{ndim}{dimensions of PCs, used by geosketch method, Default: 30}
+\item{SNN}{Use the Shared Nearest-Neighbor graph. Default: FALSE.}
 
-\item{n_cell}{the number of sampled cells, default: 500}
+\item{sampled_cells}{The barcode or ID of sampled cells.}
 
-\item{Threshold_Num}{the minimum nn of each seed cells after assignments, default: 2}
+\item{sketch.method}{Perform sketching sampling on single-cell datasets: "random", "geosketch", or "SeuratSketching".}
 
-\item{normalize}{if perform normalization to the count matrix, default: FALSE}
+\item{ndim}{Dimensions of PCs, used by the geosketch method. Default: 30.}
 
-\item{prior_net}{if a binary matrix indicate the prior knowledge of gene regulation, row is the regulator, column is the target.}
+\item{n_cell}{The number of sampled cells. Default: 500.}
+
+\item{Threshold_Num}{The minimum number of nearest neighbors for each seed cell after assignments.}
+
+\item{normalize}{If performing normalization to the count matrix. Default: FALSE.}
+
+\item{prior_net}{If a binary matrix indicates the prior knowledge of gene regulation, where rows are regulators and columns are targets.}
 }
 \description{
-a check function for RunNetID function.
-RunNetID have provided netID_params, user could specific the parameters the want, the parameters are listed as follow
+This function validates parameters for the RunNetID function.
+RunNetID provides netID_params; users can specify the desired parameters, which are listed as follows:
 }

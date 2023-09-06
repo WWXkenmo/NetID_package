@@ -1,28 +1,28 @@
-#' @title A check function for NetID
+#' @title A Function to Validate NetID Parameters
 #'
-#' @description a check function for FateDynamic function.
-#' FateDynamic have provided global_params, user could specific the parameters the want, the parameters are listed as follow
+#' @description This function validates parameters for the FateDynamic function.
+#' FateDynamic provides global_params; users can specify the desired parameters, which are listed as follows:
 #'
 #' @param min_counts
-#' Default: 20
+#' Default: 20.
 #'
 #' @param nhvgs
-#' default: 2000
+#' Default: 2000.
 #'
 #' @param npcs
-#' default: 30
+#' Default: 30.
 #'
 #' @param knn
-#' default: 30
+#' Default: 30.
 #'
 #' @param velo
-#' if run the velocity model (cellrank), default: TRUE
+#' If the velocity model (cellrank) is run, default: TRUE.
 #'
 #' @param fate_predict
-#' default: TRUE
+#' Default: TRUE.
 #'
 #' @param cluster_label
-#' specific the attributes in SingleCellExperiment object that contains the cluster label information
+#' Specify the attribute in the SingleCellExperiment object that contains cluster label information.
 #'
 #' @export
 #'
@@ -36,14 +36,14 @@ check_global_params <- function(params){
   # cluster_label
   params_space <- list(
     min_counts = 20,
-	nhvgs = 2000,
-	npcs = 30,
-	knn = 30,
-	velo = TRUE,
-	fate_predict = TRUE,
-	cluster_label = NULL
+    nhvgs = 2000,
+    npcs = 30,
+    knn = 30,
+    velo = TRUE,
+    fate_predict = TRUE,
+    cluster_label = NULL
   )
-  if(length(intersect(names(params),names(params_space)))!=length(names(params))){
+  if(length(intersect(names(params), names(params_space))) != length(names(params))){
     stop("Invalid global parameter list. Please check the input!")
   }
   params_space[names(params)] <- params

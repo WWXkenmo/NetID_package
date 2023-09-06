@@ -1,53 +1,65 @@
-#' @title A check function for NetID
+#' @title A Function to Validate NetID Parameters
 #'
-#' @description a check function for RunNetID function.
-#' RunNetID have provided netID_params, user could specific the parameters the want, the parameters are listed as follow
+#' @description This function validates parameters for the RunNetID function.
+#' RunNetID provides netID_params; users can specify the desired parameters, which are listed as follows:
+#'
+#' @param g
+#' Manually set the genes users want to analyze in their dataset. Default: NULL.
 #'
 #' @param var
-#' if using variable gene to calculate principal components, used by geosketch method, default: FALSE
+#' If using variable genes to calculate principal components, used by the geosketch method. Default: FALSE.
+#'
+#' @param do.prune
+#' If prune KNN graph.
+#'
+#' @param SNN
+#' Use the Shared Nearest-Neighbor graph. Default: FALSE.
 #'
 #' @param sampled_cells
-#' the barcode or ID of sampled cells
+#' The barcode or ID of sampled cells.
 #'
 #' @param sketch.method
-#' perform sketching sampling on single cell datasets, "geosketch" or "SeuratSketching"
+#' Perform sketching sampling on single-cell datasets: "random", "geosketch", or "SeuratSketching".
 #'
 #' @param ndim
-#' dimensions of PCs, used by geosketch method, Default: 30
-#' 
+#' Dimensions of PCs, used by the geosketch method. Default: 30.
+#'
 #' @param n_cell
-#' the number of sampled cells, default: 500
+#' The number of sampled cells. Default: 500.
 #'
 #' @param Threshold_Num
-#' the minimum nn of each seed cells after assignments, default: 2
+#' The minimum number of nearest neighbors for each seed cell after assignments.
 #'
 #' @param normalize
-#' if perform normalization to the count matrix, default: FALSE
-#' 
+#' If performing normalization to the count matrix. Default: FALSE.
+#'
 #' @param prior_net
-#' if a binary matrix indicate the prior knowledge of gene regulation, row is the regulator, column is the target.
-#' 
+#' If a binary matrix indicates the prior knowledge of gene regulation, where rows are regulators and columns are targets.
+#'
 #' @export
 #'
 check_netID_params <- function(params){
-  # var: if using variable gene to calculate principal components, used by geosketch method, default: FALSE
-  # sampled_cells: the barcode of sampled cells
-  # sketch.method: perform sketching sampling on single cell datasets, "geosketch" or "SeuratSketching"
-  # ndim: dimensions of PCs, used by geosketch method, default: 30
-  # n_cell: the number of sampled cells, default: 500
-  # Threshold_Num: the minimum nn of each seed cells after assignments
+  # var: If using variable genes to calculate principal components, used by geosketch method, default: FALSE
+  # sampled_cells: The barcode of sampled cells
+  # sketch.method: Perform sketching sampling on single-cell datasets: "geosketch" or "SeuratSketching"
+  # ndim: Dimensions of PCs, used by geosketch method, default: 30
+  # n_cell: The number of sampled cells, default: 500
+  # Threshold_Num: The minimum number of nearest neighbors for each seed cell after assignments
   
   params_space <- list(
+    g = NULL,
     var = FALSE,
-	sampled_cells = NULL,
-	sketch.method = "geosketch",
-	ndim = 30,
-	n_cell = 500,
-	Threshold_Num = 2,
-	normalize = FALSE,
-	prior_net = NULL
+    do.prune = TRUE,
+    SNN = FALSE,
+    sampled_cells = NULL,
+    sketch.method = "random",
+    ndim = 30,
+    n_cell = 500,
+    Threshold_Num = 2,
+    normalize = FALSE,
+    prior_net = NULL
   )
-  if(length(intersect(names(params),names(params_space)))!=length(names(params))){
+  if(length(intersect(names(params), names(params_space))) != length(names(params))){
     stop("Invalid global parameter list. Please check the input!")
   }
   params_space[names(params)] <- params

@@ -175,15 +175,15 @@ if palantir_model:
     pca_projections = pd.DataFrame(ad.obsm['X_pca'], index=ad.obs_names)
     dm_res = palantir.utils.run_diffusion_maps(pca_projections, n_components=ndcs)
     ms_data = palantir.utils.determine_multiscale_space(dm_res)
-    pr_res = palantir.core.run_palantir(ms_data, root, num_waypoints=num_waypoints)
-    pr_res.branch_probs.columns = ad.obs[cluster_label][pr_res.branch_probs.columns].values
     
-    if terminal_state is not None:
+    if "None" not in terminal_state:
         sc.pp.neighbors(ad, n_pcs=npcs, n_neighbors=knn)
         states = terminal_index(ad,cluster_label,terminal_state,npcs)
         pr_res = palantir.core.run_palantir(ms_data, root, states, num_waypoints=num_waypoints)
     else:
         pr_res = palantir.core.run_palantir(ms_data, root, num_waypoints=num_waypoints)
+        
+    pr_res.branch_probs.columns = ad.obs[cluster_label][pr_res.branch_probs.columns].values
         
     fate_prob = pr_res._branch_probs
     pseudotime = pr_res._pseudotime

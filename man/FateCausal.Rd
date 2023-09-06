@@ -2,11 +2,10 @@
 % Please edit documentation in R/FateCausal.R
 \name{FateCausal}
 \alias{FateCausal}
-\title{Run NetID model}
+\title{Run NetID Model}
 \usage{
 FateCausal(
   dyn.out,
-  velo_infor = FALSE,
   L = 30,
   alpha = 0,
   lambda = 100,
@@ -23,52 +22,50 @@ FateCausal(
 \arguments{
 \item{dyn.out}{The output of NetID.}
 
-\item{velo_infor}{if use velocity information to infer gene regulatory network
-Default: FALSE}
+\item{L}{The number of lags to utilize.
+Default: 30.}
 
-\item{L}{The number of lags to utilize
-Default: 30}
+\item{alpha}{Use Ridge regression (0) or Lasso regression (1).
+Default: 0.}
 
-\item{alpha}{use ridger (0) or lasso regression (1)
-Default: 0}
+\item{lambda}{Regularization parameter.
+Default: 100.}
 
-\item{lambda}{regularization parameters
-Default: 100}
+\item{cutoff}{When using velocity-aided GRN construction, FateCausal converts scaled velocity values > |cutoff| or < -|cutoff| into 1 and 0 to denote induction or repression. Lagged gene expression is used to predict the induction or repression state.}
 
-\item{cutoff}{when use velocity aid GRN construction, FateCausal would convert the scaled velocity value > |cutoff| or < -|cutoff| into 1 and 0 to denote induction or repression. And used lagged gene expression to predict the induction or repression state.}
+\item{weight}{The final GRN is defined as (1-w)*Granger_coefficient + w*GENIE3_coefficient if aggre_method = "manual".
+Default: 0.2.}
 
-\item{weight}{the final GRN is defined as (1-w)*Granger_coefficient + w*GENIE3_coefficient, if aggre_method = "manual"
-Default: 0.2}
+\item{redirected}{Re-estimate the causal direction through Granger causal test.
+Default: FALSE.}
 
-\item{redirected}{if re-estimate the causal direction through granger causal test.
-Default: FALSE}
+\item{fate_method}{Specify which fate probability to use, "cellrank" or "palantir".
+Default: "palantir".}
 
-\item{fate_method}{user need to specific which fate probability they prefer to use, "cellrank" or "palantir"
-Default: "palantir"}
+\item{aggre_method}{Use the aggregation method "RobustRankAggreg", "SUMMA", or "manual". If using "manual", specify the weight parameter.}
 
-\item{aggre_method}{use which aggregation method, "RobustRankAggreg", "SUMMA" or "manual". If use "manual", need to specific weight parameter.}
+\item{restart}{Re-estimate the GRN.
+Default: FALSE.}
 
-\item{restart}{if re-estimate the GRN. Default: FALSE}
+\item{n.cores}{The number of cores.
+Default: 8.}
 
-\item{n.cores}{The number of cores. Default: 8}
+\item{work_dir}{Users can specify the working directory by inputting the address, and the inferred GRN will be saved in this directory. Otherwise, the local working directory will be used (getwd()).
+Default: NULL.}
 
-\item{work_dir}{user could specific the working directory through input the address, and the inferred GRN would be saved in this directory.
-Otherwise the local working directory would be used (getwd())
-Default: NULL}
+\item{GRN}{A list of cell-fate specific GRNs.}
 
-\item{GRN}{a list of cell-fate specific GRN}
-
-\item{coef}{a list of granger causal correlation matrix}
+\item{coef}{A list of Granger causal correlation matrices.}
 }
 \value{
-a list contains following objects
+A list containing the following objects:
 }
 \description{
-This function is for generating the cell fate specific weighted gene regulatory network (GRN). Using the GRN skeleton and fate probability matrix, FateCausal would learn the granger causal using fate probability to order gene expression.
+This function generates the cell-fate specific weighted gene regulatory network (GRN). FateCausal learns the Granger causality using fate probability to order gene expression, based on the GRN skeleton.
 }
 \examples{
 \dontrun{
-GRN.filter <- FateCausal(dyn.out,velo_infor = FALSE,L=80,alpha = 0,weight=0.8,lambda = 100,aggre_method = "RobustRankAggreg",restart = TRUE)
+GRN.filter <- FateCausal(dyn.out, velo_infor = FALSE, L = 80, alpha = 0, weight = 0.8, lambda = 100, aggre_method = "RobustRankAggreg", restart = TRUE)
 }
 
 }

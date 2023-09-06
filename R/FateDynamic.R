@@ -1,26 +1,22 @@
-#' @title A end-to-end fate dynamic inference
+#' @title An End-to-End Fate Dynamic Inference
 #'
-#' @description A end-to-end cell dynamic inference. Run this function before RunNetID, if set dynamicInfor in RunNetID equal to TRUE.
+#' @description This function provides an end-to-end cell dynamic inference process. Run this function before RunNetID, if you set dynamicInfor in RunNetID equal to TRUE.
 #'
 #' @param sce
-#' A SingleCellExperiment object need to contain the "count" assay. "spliced" and "unspliced" assays are required if run cellrank
+#' A SingleCellExperiment object that needs to contain the "count" assay. "spliced" and "unspliced" assays are required if running cellrank.
 #'
 #' @param global_params
-#' a list object could manually set the core parameters of FateDynamic
-#' see the details of parameters through ?check_global_params
+#' A list object that can manually set the core parameters of FateDynamic. Refer to the details of parameters using ?check_global_params.
 #'
 #' @param palantir_params
-#' a list object could manually set the core parameters of palantir
-#' see the details of parameters through ?check_palantir_params
+#' A list object that can manually set the core parameters of palantir. Refer to the details of parameters using ?check_palantir_params.
 #'
 #' @param cellrank_params
-#' a list object could manually set the core parameters of cellrank
-#' see the details of parameters through ?check_cellrank_params
+#' A list object that can manually set the core parameters of cellrank. Refer to the details of parameters using ?check_cellrank_params.
 #'
 #' @param work_dir
-#' user could specific the working directory through input the address, and the varID object (pruneKnn) would be saved in this directory.
-#' Otherwise the local working directory would be used (getwd())
-#' Default: NULL
+#' Users can specify the working directory by inputting the address, and the varID object (pruneKnn) will be saved in this directory. Otherwise, the local working directory will be used (getwd()).
+#' Default: NULL.
 #'
 #'
 #' @export
@@ -30,38 +26,31 @@ FateDynamic <- function(sce,global_params = list(),palantir_params = list(),cell
   if(!is.null(work_dir)){setwd(work_dir)}
   env = environment()
 
-  suppressPackageStartupMessages(require("scran"))
-  suppressPackageStartupMessages(require("irlba"))
-  suppressPackageStartupMessages(require("rsvd"))
-  suppressPackageStartupMessages(require("reticulate"))
-  suppressPackageStartupMessages(require("Seurat"))
-  suppressPackageStartupMessages(require("Hmisc"))
-
   anndata <- reticulate::import('anndata', convert = FALSE)
   sc <- reticulate::import('scanpy', convert = FALSE)
   scv <- reticulate::import('scvelo', convert = FALSE)
 
-  sce <- sce[,colSums(assays(sce)$spliced)>0]
-  X <- assays(sce)$spliced
-  obs <- as.data.frame(colData(sce))
+  sce <- sce[,colSums(SummarizedExperiment::assays(sce)$spliced)>0]
+  X <- SummarizedExperiment::assays(sce)$spliced
+  obs <- as.data.frame(SummarizedExperiment::colData(sce))
   var <- data.frame(genes = rownames(sce))
   X <- X[!duplicated(var$genes),]
   var <- data.frame(genes = rownames(X))
   rownames(var) <- rownames(X)
   obsm <- NULL
-  reductions <- reducedDimNames(sce)
+  reductions <- SingleCellExperiment::reducedDimNames(sce)
   if (length(reductions) > 0) {
     obsm <- sapply(
       reductions,
-      function(name) as.matrix(reducedDim(sce, name)),
+      function(name) as.matrix(SingleCellExperiment::reducedDim(sce, name)),
       simplify = FALSE
     )
-    names(obsm) <- paste0('X_', tolower(reducedDimNames(sce)))
+    names(obsm) <- paste0('X_', tolower(SingleCellExperiment::reducedDimNames(sce)))
   }
 
   layers <- list()
   for (layer in c("spliced","unspliced")) {
-    mat <- assays(sce)[[layer]]
+    mat <- SummarizedExperiment::assays(sce)[[layer]]
     mat <- mat[rownames(X),]
     layers[[layer]] <- Matrix::t(mat)
   }
@@ -91,14 +80,16 @@ FateDynamic <- function(sce,global_params = list(),palantir_params = list(),cell
   if(is.null(palantir_params[["start_cell"]])){
     if(method == "cytotrace"){
       writeLines("Using CyToTRACE to identify start cell...")
-      res = CytoTRACE::CytoTRACE(as.matrix(X),ncores = n.cores)$CytoTRACE
-      res = as.matrix(res)
+      if (require(CytoTRACE)) {
+      	res = CytoTRACE::CytoTRACE(as.matrix(X),ncores = n.cores)$CytoTRACE
+      	res = as.matrix(res)
+      }
     }
     if(method == "scent"){
       writeLines("Using SCENT to identify start cell...")
-      object <- CreateSeuratObject(X)
-      object <- NormalizeData(object)
-      X_norm <- GetAssayData(object)
+      object <- Seurat::CreateSeuratObject(X)
+      object <- Seurat::NormalizeData(object)
+      X_norm <- Seurat::GetAssayData(object)
       rm(object);gc()
       if(length(intersect(list.files(getwd()),"PPI.rds")) == 1){
         writeLines("Find PPI object at local dictionary, Read PPI...")
@@ -106,7 +97,9 @@ FateDynamic <- function(sce,global_params = list(),palantir_params = list(),cell
       }else{
         PPI <- getPPI_String(X_norm,species=species)
       }
-      res = SCENT::CompCCAT(X_norm, PPI)
+      if (require(SCENT)) {
+      	res = SCENT::CompCCAT(X_norm, PPI)
+      }
       saveRDS(PPI,file="PPI.rds")
       res = as.matrix(res)
       rownames(res) <- colnames(X_norm)
@@ -119,13 +112,17 @@ FateDynamic <- function(sce,global_params = list(),palantir_params = list(),cell
   }
   ## terminal_state
   terminalstate = terminal_state[1]
+  if(is.null(terminalstate)){
+	terminalstate = "None"
+  }else{
   for(i in 2:length(terminal_state)){
 	terminalstate = paste(terminalstate," ",terminal_state[i],sep="")
   }
+  }
 
   input = "adata.h5ad"
-  fate_predict_py = capitalize(tolower(as.character(fate_predict)))
-  plot = capitalize(tolower(as.character(plot)))
+  fate_predict_py = Hmisc::capitalize(tolower(as.character(fate_predict)))
+  plot = Hmisc::capitalize(tolower(as.character(plot)))
   #if(is.null(cluster_label)) cluster_label = ""
   script = system.file("/python/FateDynamic_py.py", package = "NetID")
   commandLines = paste('python ',script,' -i ',input,' -m ',min_counts,' -n ',nhvgs,' -pc ',npcs,' -k ', knn, ' -pl ',"True",' -dc ',ndcs,' -r ',start_cell,' -ts ',terminalstate,' -nw ',nwps,' -mo ',mode,' -p ',plot,' -f ',fate_predict_py, ' -c ', cluster_label, ' -w ',weight_connectivities,' -nc ', ncores, ' -t ',tolerance,sep="")
@@ -144,9 +141,6 @@ FateDynamic <- function(sce,global_params = list(),palantir_params = list(),cell
 getPPI_String <- function (object = NULL, species = 9606, score_threshold = 600,
                            save = FALSE)
 {
-  suppressPackageStartupMessages(require("data.table"))
-  suppressPackageStartupMessages(require("igraph"))
-
   linkFiles <- paste("https://stringdb-static.org/download/protein.links.v11.0/",
                      species, ".protein.links.v11.0.txt.gz", sep = "")
   if (!file.exists(sub(pattern = ".gz", replacement = "", x = basename(linkFiles)))) {
@@ -176,7 +170,7 @@ getPPI_String <- function (object = NULL, species = 9606, score_threshold = 600,
   if (!is.null(object)) {
     gene_data <- rownames(object)
     gene_data_upper <- toupper(gene_data)
-    gene_data <- as.data.frame(unique(as.data.table(data.frame(gene_data,
+    gene_data <- as.data.frame(unique(data.table::as.data.table(data.frame(gene_data,
                                                                gene_data_upper)), by = "gene_data_upper"))
     rownames(gene_data) <- gene_data[, 2]
     PPI <- PPI[which(is.element(PPI[, 1], gene_data[, 2])),
@@ -188,18 +182,18 @@ getPPI_String <- function (object = NULL, species = 9606, score_threshold = 600,
   }
   nodes <- union(PPI[, 1], PPI[, 2])
   links <- PPI[, 1:2]
-  net <- graph_from_data_frame(d = links, vertices = nodes,
+  net <- igraph::graph_from_data_frame(d = links, vertices = nodes,
                                directed = FALSE)
   net <- igraph::simplify(net)
   if (save) {
-    saveRDS(as_adj(net), paste(species, "_ppi_matrix_STRING-11.0.Rda",
+    saveRDS(igraph::as_adj(net), paste(species, "_ppi_matrix_STRING-11.0.Rda",
                                sep = ""))
   }
   file.remove(paste(species, ".protein.links.v11.0.txt.gz",
                     sep = ""))
   file.remove(paste(species, ".protein.info.v11.0.txt.gz",
                     sep = ""))
-  return(as_adj(net))
+  return(igraph::as_adj(net))
 }
 
 

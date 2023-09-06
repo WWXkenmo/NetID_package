@@ -1,0 +1,170 @@
+---
+title: "A brief tutorial for estimating cell fate specific GRN using NetID"
+author:
+- name: "Weixu Wang"
+  affiliation: 
+  - Institute of Computational Biology, Helmholtz Center Munich, Munich, Germany
+  - Human Phenome Institute, Fudan University, Shanghai, China
+date: "`r Sys.Date()`"
+package: NetID
+output:
+    BiocStyle::html_document:
+    toc_float: true
+vignette: >
+  %\VignetteIndexEntry{NetID - R package}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+  
+```{r vignette-options, echo=FALSE, message=FALSE, warning=FALSE}
+require(BiocStyle)
+```
+
+
+# Introduction
+
+The NetID approach is designed to infer metacells capturing the most significant cell state variation on the manifold, while reducing the sample size needed for accurate gene regulatory network (GRN) inference. NetID integrates GENIE3 for GRN inference, but alternative methods can be applied to metacell profiles. However, since each cell lineage is potentially governed by a unique GRN topology, a global GRN model such as GENIE3 may provide insufficient resolution or even confound lineage-specific sub-networks. To overcome this limitation, we utilize cell fate probability inferred from pseudotime or RNA velocity to order cells along their respective lineage trajectories. This allows the prediction of directed regulator-target gene relations by ridge regression Granger causality tests. By integrating the GRN inferred from the Granger causal model and GENIE3, we can learn lineage-specific GRNs that enable identification of important driver genes and regulatory interactions during cell fate decisions.
+
+This document gives a detailed tutorial on how to conduct network inference through NetID on hematopoietic single cell RNA-seq dataset. First, load single cell datasets (The datasets could be downloaded from https://github.com/WWXkenmo/NetID_package/tree/dataset) and the NetID packages
+
+```{r load datasets, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+library(NetID)
+sce <- readRDS("blood_sce.rds")
+```
+
+The sce objects contains the spliced/unspliced read count matrices and the metadata of cells. We also need the transcriptional factors gene sets to define the regulators
+
+```{r quick show example data, eval=TRUE, echo=TRUE, warning=FALSE}
+TF <- read.csv("mouse-tfs.csv",header=TRUE,stringsAsFactors=FALSE)
+sce
+```
+
+# Learning GRN skeleton from sketched and aggregated single cell RNA-seq datasets
+
+At the first step, NetID would samples the single cell RNA-seq dataset through sketching methods, e.g. geosketch or Seurat sketch. These sketching methods would sample the cells as the “meta-cells” which would cover all latent manifold of single cell transcriptome. Then, the nearest neighborhoods of those meta-cells would specifically assign to the one meta cell according to the edges P-values calculated from VarID, and finally perform aggregation. The resulted GEP of meta-cells would be used as the input of network inference methods like GENIE3 (default), to learn the basic network structure.
+
+
+```{r Run NetID, eval=TRUE, echo=TRUE, warning=FALSE}
+dyn.out <- RunNetID(sce, regulators = TF[,1], targets = TF[,1],netID_params = list(normalize=FALSE), dynamicInfer = FALSE)
+```
+
+To check the details of the RunNetID parameters, one could use
+```{r Check NetID Parameters, eval=FALSE, echo=TRUE, warning=FALSE}
+?check_network_params()
+```
+
+In default, NetID would use random sampling, we strongly encourage user to use geosketch sampling. Geosketch sampling require user to install geosketch pythom module at first, check https://github.com/brianhie/geosketch for more installation details.
+
+```{r Run NetID (geosketch results), eval=TRUE, echo=TRUE, warning=FALSE}
+# install python "geosketch"
+# reticulate::py_install("geosketch")
+dyn.out <- RunNetID(sce, regulators = TF[,1], targets = TF[,1],netID_params = list(sketch.method = "geosketch",normalize=FALSE), dynamicInfer = FALSE)
+```
+
+# Perform pruning on Shared Nearest-neighbor (SNN) graph
+
+NetID also accept Seurat object as input, and use SNN graph to perform pruning and aggregation. We could build the Seurat object at first.
+
+```{r Build Seurat object, eval=TRUE, echo=TRUE, warning=FALSE}
+library(SummarizedExperiment)
+library(Seurat)
+Se <- CreateSeuratObject(counts = assays(sce)$spliced)
+
+Se <- NormalizeData(Se, normalization.method = "LogNormalize", scale.factor = 10000)
+Se <- FindVariableFeatures(Se, selection.method = "vst", nfeatures = 1000)
+
+all.genes <- rownames(Se)
+Se <- ScaleData(Se, features = all.genes)
+Se <- RunPCA(Se, features = VariableFeatures(object = Se))
+Se <- FindNeighbors(Se, dims = 1:10)
+Se <- FindClusters(Se, resolution = 0.5)
+```
+
+Then, run the NetID as follow, set the SNN = TRUE
+
+```{r Run NetID with SNN, eval=FALSE, echo=TRUE, warning=FALSE}
+dyn.out <- RunNetID(Se, regulators = TF[,1], targets = TF[,1],netID_params = list(normalize=FALSE, SNN = TRUE), dynamicInfer = FALSE)
+```
+
+# Inferring Fate Probability and base GRN
+
+This step only output the global GRN learned from all sampled meta-cells. To learn lineage-specific GRN, we need to run cellrank and Palantir at first. NetID provided a function for end-to-end cell fate analysis through cellrank and Palantir.
+
+```{r Run model, eval=TRUE, echo=TRUE, warning=FALSE}
+FateDynamic(sce,global_params = list(cluster_label = "celltype",min_counts = 10 ,nhvgs = 3000,velo = FALSE),palantir_params = list(start_cell = "TGATACGTGCTAGGAGCTT"))
+```
+
+NetID provides three methods for identifying root cell, includes stemness score based method: SCENT (scent) and CytoTRACE (cytotrace), or use marekr gene (markergene), in tutorial just set the cell "TGATACGTGCTAGGAGCTT" as the root cell, user could manually set the root cell they want.
+
+if user suppose want to unsupervisely identify the root cell, could run following command
+
+```{r Run FateDynamic (SCENT), eval=FALSE, echo=TRUE, warning=FALSE}
+FateDynamic(sce,global_params = list(cluster_label = "celltype",min_counts = 10 ,nhvgs = 3000,velo = FALSE),palantir_params = list(method = "scent"))
+```
+
+Then, run the NetID again, but now we have dynamics information, we could set dynamicInfer = TRUE now.
+
+```{r Run FateDynamic, eval=TRUE, echo=TRUE, warning=FALSE}
+dyn.out <- RunNetID(sce,regulators = TF[,1], targets = TF[,1],netID_params =
+                    list(normalize=FALSE,sketch.method = "geosketch"), 
+                    dynamicInfer = TRUE,velo=FALSE)
+```
+
+NetID classify the cells according to the fate probability matrix using Gaussian Mixture Model, then we calculate the lineage fate probability fold change to assigh the cluster to the specific lineage.
+
+# Learning cell fate specific GRN through granger causal regression model.
+
+The dyn.out object contains the skeleton of global network (learned from all cells without lineage information) and cell fate probability information. NetID would run L2-penalized granger regression model for each target genes to re-calculate the regulatory coefficients of the skeleton, with using cell fate probability as the "time-series", and then aggregate the learned coefficients with the global coefficients through rank method.
+
+```{r Run FateCausal, eval=TRUE, echo=TRUE, warning=FALSE}
+GRN <- FateCausal(dyn.out,L=30,aggre_method = "RobustRankAggreg")
+```
+
+The output of FateCausal is a list object contains the lineage specific GRN. In which 'grn' denotes the weighted unsigned network, and 'sign_grn' denotes the weighted signed network. 
+
+```{r check network, eval=TRUE, echo=TRUE, warning=FALSE}
+GRN$grn[[1]][1:10,1:10]
+```
+
+The row represents targets, and columns represents regulators
+
+# Module Identification and Visualization
+
+Use the ModuleFinder() function to identify the closest module for a specific TF within the gene regulatory network. Provide the TF of interest as an input to the function. This function also allows you to perform statistical tests to assess the significance of the identified module. To demonstrate how to use it, first we could identify Gata1 relate module in Erythorid lineage. 
+
+```{r statistical test of the module, eval=TRUE, echo=TRUE, warning=FALSE}
+result = ModuleFinder(GRN,"Erythroblasts stage2",c("Gata1"),method = "spinglass")
+result
+```
+
+You would see that in the output of ModuleFinder, it would contain the identified Gata1 relate module, and it statistical test result. As we can see in Ery branch we could identify Gata1 related regulatory module. To compare with, we could try if we could identify Gata1 related module in Neu branch.
+
+```{r statistical test of the module2, eval=TRUE, echo=TRUE, warning=FALSE}
+result2 = ModuleFinder(GRN,"Neutrophils",c("Gata1"),method = "spinglass")
+result2
+```
+
+As our expect, in Neu branch we can't identify Gata1 specific module. Which support that Gata1 is a important TF in Ery specific differentiation.
+
+In the same time, if we want to find smallar module, we could tune the parameter 'gamma' in ModuleFinder function.
+
+```{r identify smallar module, eval=TRUE, echo=TRUE, warning=FALSE}
+result = ModuleFinder(GRN,"Erythroblasts stage2",c("Gata1"),method = "spinglass",gamma = 0.3)
+result
+```
+
+Gamma is the parameter used in spinglass algorithm, it could control the size of the module.
+
+To visualize the network, NetID also provide function to help visualize identified module. 
+
+```{r visualize the module, eval=TRUE, echo=TRUE, warning=FALSE}
+graphPlot(GRN,result,"Gata1","Erythroblasts stage2")
+```
+
+
+# Session information
+
+```{r sessionInfo, echo=T}
+sessionInfo()
+```
+

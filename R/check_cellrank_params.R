@@ -1,22 +1,22 @@
-#' @title A check function for NetID
+#' @title A function to check NetID
 #'
-#' @description a check function for FateDynamic function.
-#' FateDynamic have provided cellrank_params, user could specific the parameters the want, the parameters are listed as follow
+#' @description This function checks the parameters for the FateDynamic function.
+#' FateDynamic provides cellrank_params, allowing users to specify desired parameters. The available parameters are listed as follows:
 #'
 #' @param mode
-#' the velocity mode, default: stochastic
+#' The velocity mode. Default: stochastic.
 #'
 #' @param weight_connectivities
-#' default: 0.2
+#' Default: 0.2.
 #'
 #' @param ncores
-#' default: 6
+#' Default: 6.
 #'
 #' @param plot
-#' default: TRUE
-#' 
+#' Default: TRUE.
+#'
 #' @param tolerance
-#' default: 1e-6
+#' Default: 1e-6.
 #'
 #' @export
 #'
@@ -28,12 +28,12 @@ check_cellrank_params <- function(params){
   # tolerance
   params_space <- list(
     mode = "stochastic",
-	weight_connectivities = 0.2,
-	ncores = 6,
-	plot = TRUE,
-	tolerance = 10^-6
+    weight_connectivities = 0.2,
+    ncores = 6,
+    plot = TRUE,
+    tolerance = 10^-6
   )
-  if(length(intersect(names(params),names(params_space)))!=length(names(params))){
+  if(length(intersect(names(params), names(params_space))) != length(names(params))){
     stop("Invalid cellrank parameter list. Please check the input!")
   }
   params_space[names(params)] <- params

@@ -2,22 +2,22 @@
 % Please edit documentation in R/check_cellrank_params.R
 \name{check_cellrank_params}
 \alias{check_cellrank_params}
-\title{A check function for NetID}
+\title{A function to check NetID}
 \usage{
 check_cellrank_params(params)
 }
 \arguments{
-\item{mode}{the velocity mode, default: stochastic}
+\item{mode}{The velocity mode. Default: stochastic.}
 
-\item{weight_connectivities}{default: 0.2}
+\item{weight_connectivities}{Default: 0.2.}
 
-\item{ncores}{default: 6}
+\item{ncores}{Default: 6.}
 
-\item{plot}{default: TRUE}
+\item{plot}{Default: TRUE.}
 
-\item{tolerance}{default: 1e-6}
+\item{tolerance}{Default: 1e-6.}
 }
 \description{
-a check function for FateDynamic function.
-FateDynamic have provided cellrank_params, user could specific the parameters the want, the parameters are listed as follow
+This function checks the parameters for the FateDynamic function.
+FateDynamic provides cellrank_params, allowing users to specify desired parameters. The available parameters are listed as follows:
 }
