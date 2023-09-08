@@ -5,7 +5,9 @@ A scalable method to infer fate specific gene regulatory network from single cel
 
 ## Tutorial
 
-See Jupyter Notebooks in notebook folder
+```
+vignette("NetID")
+```
 
 ## Installation
 ### Basic installation
