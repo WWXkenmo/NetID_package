@@ -13,7 +13,6 @@ FateCausal(
   weight = 0.2,
   redirected = FALSE,
   fate_method = "palantir",
-  aggre_method = "RobustRankAggreg",
   restart = FALSE,
   n.cores = 8,
   work_dir = NULL
@@ -42,8 +41,6 @@ Default: FALSE.}
 \item{fate_method}{Specify which fate probability to use, "cellrank" or "palantir".
 Default: "palantir".}
 
-\item{aggre_method}{Use the aggregation method "RobustRankAggreg", "SUMMA", or "manual". If using "manual", specify the weight parameter.}
-
 \item{restart}{Re-estimate the GRN.
 Default: FALSE.}
 
@@ -52,6 +49,8 @@ Default: 8.}
 
 \item{work_dir}{Users can specify the working directory by inputting the address, and the inferred GRN will be saved in this directory. Otherwise, the local working directory will be used (getwd()).
 Default: NULL.}
+
+\item{aggre_method}{Use the aggregation method "RobustRankAggreg", "SUMMA", or "manual". If using "manual", specify the weight parameter.}
 
 \item{GRN}{A list of cell-fate specific GRNs.}
 

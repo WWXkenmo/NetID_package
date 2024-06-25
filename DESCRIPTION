@@ -1,35 +1,20 @@
 Package: NetID
 Type: Package
-Title: A Meta-cell Base Method to Infer Fate Specific Gene Regulatory Network from Single Cell Gene Expression Data
+Title: A Meta-cell Base Method to Infer Fate Specific Gene Regulatory
+        Network from Single Cell Gene Expression Data
 Version: 0.1.0
 biocViews:
-Imports:
-    Matrix,
-    lmtest,
-    glmnet,
-    RobustRankAggreg,
-    irlba,
-    rsvd,
-    reticulate,
-    Seurat,
-    Hmisc,
-    mclust,
-    pracma,
-    doParallel,
-    doRNG,
-    RaceID (>= 0.2.9),
-    igraph,
-    rARPACK
-Suggests:
-	GENIE3,
-	SingleCellExperiment,
-	knitr,
-	rmarkdown
+Imports: Matrix, lmtest, glmnet, RobustRankAggreg, irlba, rsvd,
+        reticulate, Seurat, Hmisc, mclust, pracma, doParallel, doRNG,
+        RaceID (>= 0.2.9), igraph, rARPACK
+Suggests: GENIE3, SingleCellExperiment, knitr, rmarkdown
 VignetteBuilder: knitr
 Author: Weixu Wang and Dominic Grün
 Maintainer: Weixu Wang <weixu.wang@helmholtz-muenchen.de>
 Description: First sample the cells from single cell data, generate aggregate profile on pruned K-Nearest Neighbor graph, lead to a better gene expression profile to quantify gene regulations.
 License: MIT + file LICENSE
 Encoding: UTF-8
-LazyData: true
 RoxygenNote: 7.2.3
+NeedsCompilation: no
+Packaged: 2023-09-06 08:38:49 UTC; wangweixu
+Depends: R (>= 3.5.0)

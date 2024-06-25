@@ -5,9 +5,7 @@ A scalable method to infer fate specific gene regulatory network from single cel
 
 ## Tutorial
 
-```
-vignette("NetID")
-```
+See Jupyter Notebooks in notebook folder
 
 ## Installation
 ### Basic installation
@@ -23,7 +21,7 @@ pip install geosketch
 ```
 #### install NetID
 ```
-install.packages('NetID_0.1.0.tar.gz', repos=NULL, type='source')
+devtools::install_github("WWXKenmo/NetID_package")
 ```
 ### Advance installation
 #### install cellrank and palantir to realize lineage-specific GRN prediction
