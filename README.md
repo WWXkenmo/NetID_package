@@ -33,10 +33,6 @@ mamba install -c bioconda -c conda-forge cellrank-krylov
 ## conda install -c bioconda -c conda-forge cellrank-krylov
 pip install numpy==1.23.5 palantir
 ```
-#### install summa to output global GRN
-```
-devtools::install_github("learn-ensemble/R-SUMMA")
-```
 #### install cytotrace and scent to determine the root cell
 ```
 devtools::install_github("aet21/SCENT")
