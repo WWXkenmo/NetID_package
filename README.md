@@ -19,7 +19,7 @@ conda activate NetID # if it encounter the error, run 'source activate' ahead of
 conda install -c conda-forge r-devtools
 pip install geosketch
 ```
-#### install NetID
+#### install NetID (switch to the R terminal)
 ```
 devtools::install_github("WWXKenmo/NetID_package")
 ```
