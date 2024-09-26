@@ -19,10 +19,12 @@ conda activate NetID # if it encounter the error, run 'source activate' ahead of
 conda install -c conda-forge r-devtools
 pip install geosketch
 ```
-#### install NetID (switch to the R terminal)
+#### install dependence in R including GENIE3, SingleCellExperiment and NetID (switch to the R terminal)
 ```
+install.packages("BiocManager")
+BiocManager::install("GENIE3")
+BiocManager::install("SingleCellExperiment")
 devtools::install_github("WWXKenmo/NetID_package")
-install.packages("GENIE3")
 ```
 ### Advance installation
 #### install cellrank and palantir to realize lineage-specific GRN prediction
