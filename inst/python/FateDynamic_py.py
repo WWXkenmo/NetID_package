@@ -167,6 +167,8 @@ def plot_palantir_results(pr_res, tsne,writekey,save,s=3):
 if palantir_model:
     logging.info("Using palantir to perform cell fate prediction")
     ad = sc.read_h5ad(input)
+    ad.obs[cluster_label] = [item.replace(" ", "_") for item in ad.obs[cluster_label]]
+    
     sc.pp.filter_genes(ad, min_counts=min_counts)
     sc.pp.normalize_per_cell(ad)
     sc.pp.log1p(ad)
