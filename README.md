@@ -22,6 +22,7 @@ pip install geosketch
 #### install NetID (switch to the R terminal)
 ```
 devtools::install_github("WWXKenmo/NetID_package")
+install.packages("GENIE3")
 ```
 ### Advance installation
 #### install cellrank and palantir to realize lineage-specific GRN prediction
@@ -31,6 +32,11 @@ conda install mamba -c conda-forge
 mamba install -c bioconda -c conda-forge cellrank-krylov
 ## or could use conda to install
 ## conda install -c bioconda -c conda-forge cellrank-krylov
+
+## install proper version of package
+pip install scanpy==1.9.2
+pip install matplotlib==3.7
+pip install pandas==1.5.3
 pip install numpy==1.23.5 palantir
 ```
 #### install cytotrace and scent to determine the root cell
