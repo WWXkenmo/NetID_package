@@ -39,7 +39,8 @@ mamba install -c bioconda -c conda-forge cellrank-krylov
 pip install scanpy==1.9.2
 pip install matplotlib==3.7
 pip install pandas==1.5.3
-pip install numpy==1.23.5 palantir
+pip install numpy==1.23.5
+pip install palantir
 ```
 #### install cytotrace and scent to determine the root cell
 ```
