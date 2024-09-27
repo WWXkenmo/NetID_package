@@ -1,15 +1,6 @@
 ## ----vignette-options, echo=FALSE, message=FALSE, warning=FALSE---------------
 require(BiocStyle)
 
-## ----install require module, eval=FALSE, echo=TRUE, message=FALSE, warning=FALSE----
-#  if (!requireNamespace("reticulate", quietly = TRUE))
-#      install.packages("reticulate")
-#  reticulate::py_install("anndata",pip=TRUE)
-#  reticulate::py_install("scanpy",pip=TRUE)
-#  reticulate::py_install("scvelo",pip=TRUE)
-#  reticulate::py_install("palantir",pip=TRUE)
-#  reticulate::py_install("cellrank",pip=TRUE)
-
 ## ----load datasets, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE--------
 library(NetID)
 sce <- readRDS("blood_sce.rds")
@@ -45,7 +36,6 @@ dyn.out <- RunNetID(sce, regulators = TF[,1], targets = TF[,1],
 
 ## ----Run NetID (geosketch results), eval=FALSE, echo=TRUE, warning=FALSE------
 #  # install python "geosketch"
-#  # reticulate::py_install("geosketch")
 #  dyn.out <- RunNetID(sce, regulators = TF[,1], targets = TF[,1],
 #                      netID_params = list(sketch.method = "geosketch",
 #                                          normalize=FALSE),
@@ -101,8 +91,8 @@ FateDynamic(sce,
 #                                   velo = FALSE),
 #              palantir_params =
 #                list(start_cell = "TGATACGTGCTAGGAGCTT",
-#                     terminal_state = c("erythroblasts_stage2",
-#                                        "neutrophils")))
+#                     terminal_state = c("Erythroblasts_stage2",
+#                                        "Neutrophils")))
 
 ## ----Run FateDynamic, eval=TRUE, echo=TRUE, warning=FALSE---------------------
 dyn.out <- RunNetID(sce,

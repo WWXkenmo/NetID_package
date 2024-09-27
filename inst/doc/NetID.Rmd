@@ -20,20 +20,6 @@ vignette: >
 require(BiocStyle)
 ```
 
-# Required installation
-
-Before using NetID package, some python modules is required, please install following modules before running following tutorial
-
-```{r install require module, eval=FALSE, echo=TRUE, message=FALSE, warning=FALSE}
-if (!requireNamespace("reticulate", quietly = TRUE))
-    install.packages("reticulate")
-reticulate::py_install("anndata",pip=TRUE)
-reticulate::py_install("scanpy",pip=TRUE)
-reticulate::py_install("scvelo",pip=TRUE)
-reticulate::py_install("palantir",pip=TRUE)
-reticulate::py_install("cellrank",pip=TRUE)
-```
-
 # Introduction
 
 The NetID approach is designed to infer metacells that capture the most significant cell state variations on the manifold while reducing the sample size needed for accurate gene regulatory network (GRN) inference. NetID integrates GENIE3 for GRN inference, but alternative methods can be applied to metacell profiles. However, since each cell lineage is potentially governed by a unique GRN topology, a global GRN model such as GENIE3 may provide insufficient resolution or even confound lineage-specific sub-networks. To overcome this limitation, we utilize cell fate probabilities inferred from pseudotime or RNA velocity to order cells along their respective lineage trajectories. This allows the prediction of directed regulator-target gene relations by ridge regression Granger causality tests. By integrating the GRN inferred from the Granger causal model and GENIE3, we can learn lineage-specific GRNs that enable the identification of important driver genes and regulatory interactions during cell fate decisions.
@@ -97,7 +83,6 @@ By default, NetID uses random sampling. However, we strongly encourage users to 
 
 ```{r Run NetID (geosketch results), eval=FALSE, echo=TRUE, warning=FALSE}
 # install python "geosketch"
-# reticulate::py_install("geosketch")
 dyn.out <- RunNetID(sce, regulators = TF[,1], targets = TF[,1],
                     netID_params = list(sketch.method = "geosketch",
                                         normalize=FALSE), 
@@ -177,8 +162,8 @@ FateDynamic(sce,
                                  velo = FALSE),
             palantir_params = 
               list(start_cell = "TGATACGTGCTAGGAGCTT",
-                   terminal_state = c("erythroblasts_stage2",
-                                      "neutrophils")))
+                   terminal_state = c("Erythroblasts_stage2",
+                                      "Neutrophils")))
 ```
 
 In this case, proceed to run NetID once more, considering the availability of dynamic information with dynamicInfer = TRUE.
