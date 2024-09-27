@@ -83,16 +83,16 @@ FateDynamic(sce,
 #                                   velo = FALSE),
 #              palantir_params = list(method = "scent"))
 
-## ----Run FateDynamic (set terminal state), eval=FALSE, echo=TRUE, warning=FALSE----
-#  FateDynamic(sce,
-#              global_params = list(cluster_label = "celltype",
-#                                   min_counts = 10 ,
-#                                   nhvgs = 3000,
-#                                   velo = FALSE),
-#              palantir_params =
-#                list(start_cell = "TGATACGTGCTAGGAGCTT",
-#                     terminal_state = c("Erythroblasts_stage2",
-#                                        "Neutrophils")))
+## ----Run FateDynamic (set terminal state), eval=TRUE, echo=TRUE, warning=FALSE----
+FateDynamic(sce,
+            global_params = list(cluster_label = "celltype",
+                                 min_counts = 10 ,
+                                 nhvgs = 3000,
+                                 velo = FALSE),
+            palantir_params = 
+              list(start_cell = "TGATACGTGCTAGGAGCTT",
+                   terminal_state = c("erythroblasts_stage2",
+                                      "neutrophils")))
 
 ## ----Run FateDynamic, eval=TRUE, echo=TRUE, warning=FALSE---------------------
 dyn.out <- RunNetID(sce,

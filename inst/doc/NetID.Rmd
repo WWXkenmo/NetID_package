@@ -154,7 +154,7 @@ FateDynamic(sce,
 
 Users also have the option to define the terminal states if they possess prior knowledge.
 
-```{r Run FateDynamic (set terminal state), eval=FALSE, echo=TRUE, warning=FALSE}
+```{r Run FateDynamic (set terminal state), eval=TRUE, echo=TRUE, warning=FALSE}
 FateDynamic(sce,
             global_params = list(cluster_label = "celltype",
                                  min_counts = 10 ,
@@ -162,8 +162,8 @@ FateDynamic(sce,
                                  velo = FALSE),
             palantir_params = 
               list(start_cell = "TGATACGTGCTAGGAGCTT",
-                   terminal_state = c("Erythroblasts_stage2",
-                                      "Neutrophils")))
+                   terminal_state = c("erythroblasts_stage2",
+                                      "neutrophils")))
 ```
 
 In this case, proceed to run NetID once more, considering the availability of dynamic information with dynamicInfer = TRUE.
