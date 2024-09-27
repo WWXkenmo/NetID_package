@@ -39,7 +39,7 @@ mamba install -c bioconda -c conda-forge cellrank-krylov
 pip install scanpy==1.9.2
 pip install matplotlib==3.7
 pip install pandas==1.5.3
-pip install palantir
+pip install palantir==1.0.1
 pip uninstall numpy
 pip install numpy==1.23.5
 ```
