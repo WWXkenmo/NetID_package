@@ -13,7 +13,7 @@ FateCausal(
   weight = 0.2,
   redirected = FALSE,
   fate_method = "palantir",
-  restart = FALSE,
+  restart = TRUE,
   n.cores = 8,
   work_dir = NULL
 )
@@ -42,7 +42,7 @@ Default: FALSE.}
 Default: "palantir".}
 
 \item{restart}{Re-estimate the GRN.
-Default: FALSE.}
+Default: TRUE.}
 
 \item{n.cores}{The number of cores.
 Default: 8.}

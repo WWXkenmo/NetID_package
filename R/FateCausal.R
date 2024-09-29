@@ -38,7 +38,7 @@
 #'
 #' @param restart
 #' Re-estimate the GRN.
-#' Default: FALSE.
+#' Default: TRUE.
 #'
 #' @param n.cores
 #' The number of cores.
@@ -62,7 +62,7 @@
 #'
 #' @export
 #'
-FateCausal <- function(dyn.out,L=30,alpha = 0,lambda=100,cutoff=0.25,weight=0.2,redirected=FALSE,fate_method = "palantir",restart=FALSE,n.cores = 8,work_dir = NULL){
+FateCausal <- function(dyn.out,L=30,alpha = 0,lambda=100,cutoff=0.25,weight=0.2,redirected=FALSE,fate_method = "palantir",restart=TRUE,n.cores = 8,work_dir = NULL){
   if(!is.null(work_dir)){setwd(work_dir)}
 
   #velo_m <- velo_m[apply(velo_m,1,function(x){sum(is.nan(x))})==0,]

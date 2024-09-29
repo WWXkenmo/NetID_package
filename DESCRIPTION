@@ -14,7 +14,7 @@ Maintainer: Weixu Wang <weixu.wang@helmholtz-muenchen.de>
 Description: First sample the cells from single cell data, generate aggregate profile on pruned K-Nearest Neighbor graph, lead to a better gene expression profile to quantify gene regulations.
 License: MIT + file LICENSE
 Encoding: UTF-8
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.2
 NeedsCompilation: no
-Packaged: 2023-09-06 08:38:49 UTC; wangweixu
+Packaged: 2024-09-29 11:02:18 UTC; weixu.wang
 Depends: R (>= 3.5.0)

@@ -26,14 +26,14 @@ The NetID approach is designed to infer metacells that capture the most signific
 
 This document provides a detailed tutorial on how to conduct network inference through NetID on hematopoietic single-cell RNA-seq datasets. First, load the single-cell datasets (The datasets can be downloaded from https://github.com/WWXkenmo/NetID_package/tree/dataset) and the NetID packages.
 
-```{r load datasets, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE}
+```{r load datasets, eval=TRUE, echo=TRUE, message=FALSE, warning=FALSE, message=FALSE}
 library(NetID)
 sce <- readRDS("blood_sce.rds")
 ```
 
 The sce object contains the matrices of spliced/unspliced read counts and the metadata of cells. Additionally, we require gene sets for transcription factors to define the regulators.
 
-```{r quick show example data, eval=TRUE, echo=TRUE, warning=FALSE}
+```{r quick show example data, eval=TRUE, echo=TRUE, warning=FALSE, message=FALSE}
 TF <- read.csv("mouse-tfs.csv",header=TRUE,stringsAsFactors=FALSE)
 sce
 ```
@@ -41,7 +41,7 @@ sce
 ## Note
 Before running NetID, please check your cell type labels to ensure that all spaces are transformed into underscores.
 
-```{r Validate cell type label, eval=TRUE, echo=TRUE, warning=FALSE}
+```{r Validate cell type label, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE}
 celltype = as.character(as.matrix(sce$celltype))
 transform_to_underscore <- function(input_string) {
   transformed_string <- gsub(" ", "_", tolower(input_string))
@@ -68,7 +68,7 @@ Upon executing the aforementioned function, a `VarID` object will be saved in th
 
 Should a user wish to specify a custom save path, they have the option to manually set the parameter as follows
 
-```{r Run NetID (set path), eval=FALSE, echo=TRUE, warning=FALSE}
+```{r Run NetID (set path), eval=FALSE, echo=TRUE, warning=FALSE,message=FALSE}
 dyn.out <- RunNetID(sce, regulators = TF[,1], targets = TF[,1],
                     netID_params = list(normalize=FALSE), 
                     dynamicInfer = FALSE, work_dir = "Set/the/Path/")
@@ -81,7 +81,7 @@ To review the details of the RunNetID parameters, one could use...
 
 By default, NetID uses random sampling. However, we strongly encourage users to utilize geosketch sampling. Geosketch sampling requires users to install the geosketch Python module first. For more installation details, please visit https://github.com/brianhie/geosketch .
 
-```{r Run NetID (geosketch results), eval=FALSE, echo=TRUE, warning=FALSE}
+```{r Run NetID (geosketch results), eval=FALSE, echo=TRUE, warning=FALSE,message=FALSE}
 # install python "geosketch"
 dyn.out <- RunNetID(sce, regulators = TF[,1], targets = TF[,1],
                     netID_params = list(sketch.method = "geosketch",
@@ -89,11 +89,17 @@ dyn.out <- RunNetID(sce, regulators = TF[,1], targets = TF[,1],
                     dynamicInfer = FALSE)
 ```
 
+The computed global GRN is saved in `dyn.out$skeleton` objects
+
+```{r return NetID outputs, eval=FALSE, echo=TRUE, warning=FALSE,message=FALSE}
+names(dyn.out)
+```
+
 # Perform pruning on Shared Nearest-neighbor (SNN) graph
 
 NetID also accepts a Seurat object as input and employs the SNN graph for pruning and aggregation. To begin, we can construct the Seurat object.
 
-```{r Build Seurat object, eval=TRUE, echo=TRUE, warning=FALSE}
+```{r Build Seurat object, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE}
 library(SummarizedExperiment)
 library(Seurat)
 Se <- CreateSeuratObject(counts = assays(sce)$spliced)
@@ -112,7 +118,7 @@ Se <- FindClusters(Se, resolution = 0.5)
 
 Then, run NetID as follows and set `SNN` = TRUE.
 
-```{r Run NetID with SNN, eval=FALSE, echo=TRUE, warning=FALSE}
+```{r Run NetID with SNN, eval=FALSE, echo=TRUE, warning=FALSE,message=FALSE}
 dyn.out <- RunNetID(Se, regulators = TF[,1], targets = TF[,1],
                     netID_params = list(normalize=FALSE, SNN = TRUE), 
                     dynamicInfer = FALSE)
@@ -122,7 +128,7 @@ dyn.out <- RunNetID(Se, regulators = TF[,1], targets = TF[,1],
 
 The previous steps only output the global GRN learned from all sampled meta-cells. To learn lineage-specific GRNs, we need to first run `CellRank` and `Palantir`. NetID provides a function for end-to-end cell fate analysis using `CellRank` and `Palantir`.
 
-```{r Run model, eval=TRUE, echo=TRUE, warning=FALSE}
+```{r Run model, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE}
 FateDynamic(sce,
             global_params = list(cluster_label = "celltype",
                                  min_counts = 10 ,
@@ -133,7 +139,7 @@ FateDynamic(sce,
 
 To review the details of global parameters, Palantir parameters and CellRank parameters in FateDynamic function, one could use
 
-```{r check FateDynamic parameters, eval=FALSE, echo=TRUE, warning=FALSE}
+```{r check FateDynamic parameters, eval=FALSE, echo=TRUE, warning=FALSE,message=FALSE}
 ?check_global_params
 ?check_palantir_params
 ?check_cellrank_params
@@ -143,7 +149,7 @@ NetID offers three methods for identifying the root cell, which include the stem
 
 If a user wishes to unsupervisedly identify the root cell, they can execute the following command:
 
-```{r Run FateDynamic (SCENT), eval=FALSE, echo=TRUE, warning=FALSE}
+```{r Run FateDynamic (SCENT), eval=FALSE, echo=TRUE, warning=FALSE,message=FALSE}
 FateDynamic(sce,
             global_params = list(cluster_label = "celltype",
                                  min_counts = 10 ,
@@ -154,7 +160,7 @@ FateDynamic(sce,
 
 Users also have the option to define the terminal states if they possess prior knowledge.
 
-```{r Run FateDynamic (set terminal state), eval=TRUE, echo=TRUE, warning=FALSE}
+```{r Run FateDynamic (set terminal state), eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE}
 FateDynamic(sce,
             global_params = list(cluster_label = "celltype",
                                  min_counts = 10 ,
@@ -166,9 +172,9 @@ FateDynamic(sce,
                                       "neutrophils")))
 ```
 
-In this case, proceed to run NetID once more, considering the availability of dynamic information with dynamicInfer = TRUE.
+To compute lineage-specific GRNs, proceed to run NetID once more, considering the availability of dynamic information with dynamicInfer = TRUE.
 
-```{r Run FateDynamic, eval=TRUE, echo=TRUE, warning=FALSE}
+```{r Run FateDynamic, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE}
 dyn.out <- RunNetID(sce,
                     regulators = TF[,1], 
                     targets = TF[,1],
@@ -181,7 +187,7 @@ dyn.out <- RunNetID(sce,
 
 NetID classifies the cells based on the fate probability matrix using a Gaussian Mixture Model. Next, we compute the lineage fate probability fold change to assign each cluster to a specific lineage. To visualize the cell fate probability in a PCA 2D space, the following function can be utilized:
 
-```{r plot cell fate probability, eval=TRUE, echo=TRUE, warning=FALSE}
+```{r plot cell fate probability, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE}
 ## load basis information
 dyn.out$basis <- reducedDim(sce, "PCA")[,c(1,2)]
 
@@ -197,13 +203,13 @@ plot_grid(p1,p2)
 
 The dyn.out object contains the skeleton of the global network (learned from all cells without lineage information) and cell fate probability information. NetID would run an L2-penalized Granger regression model for each target gene to re-calculate the regulatory coefficients of the skeleton, with using cell fate probability to define the "time-series", and then aggregates the learned coefficients with the global coefficients through a rank-based method.
 
-```{r Run FateCausal, eval=TRUE, echo=TRUE, warning=FALSE}
+```{r Run FateCausal, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE}
 GRN <- FateCausal(dyn.out,L=30)
 ```
 
 The output of FateCausal is a list object that contains the lineage-specific Gene Regulatory Network (GRN). In this context, `grn` represents the weighted unsigned network, while `sign_grn` represents the weighted signed network.
 
-```{r check network, eval=TRUE, echo=TRUE, warning=FALSE}
+```{r check network, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE}
 GRN$grn[[1]][1:10,1:10]
 ```
 
@@ -213,7 +219,7 @@ Rows represent targets, and columns represent regulators
 
 Utilize the `ModuleFinder()` function to identify the nearest module for a specific Transcription Factor (TF) within the gene regulatory network. Input the TF of interest into the function. This function also provides the option to conduct statistical tests to evaluate the significance of the identified module. To illustrate its usage, we begin by identifying the Gata1-related module within the Erythroblasts (Ery) lineage.
 
-```{r statistical test of the module, eval=TRUE, echo=TRUE, warning=FALSE}
+```{r statistical test of the module, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE}
 result = ModuleFinder(GRN,"erythroblasts_stage2",c("Gata1"),
                       method = "spinglass")
 result
@@ -221,7 +227,7 @@ result
 
 Upon examining the ModuleFinder output, we retrieve the identified Gata1-related module along with its corresponding statistical test results. Notably, in the Erythroid branch, we successfully identified the Gata1-related regulatory module. To compare, we can ascertain whether a Gata1-related module can be recovered for the Neutrophils (Neu) branch.
 
-```{r statistical test of the module2, eval=TRUE, echo=TRUE, warning=FALSE}
+```{r statistical test of the module2, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE}
 result2 = ModuleFinder(GRN,"neutrophils",c("Gata1"),
                        method = "spinglass")
 result2
@@ -231,7 +237,7 @@ As anticipated, in the Neu branch, we are unable to identify a Gata1-specific mo
 
 Additionally, should we desire to discover smaller modules, it is possible to adjust the `gamma` parameter within the `ModuleFinder` function.
 
-```{r identify smallar module, eval=TRUE, echo=TRUE, warning=FALSE}
+```{r identify smallar module, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE}
 result = ModuleFinder(GRN,"erythroblasts_stage2",c("Gata1"),
                       method = "spinglass",gamma = 0.4)
 result
@@ -241,7 +247,7 @@ result
 
 For network visualization, NetID also offers a function designed to assist in visualizing the identified modules.
 
-```{r visualize the module, eval=TRUE, echo=TRUE, warning=FALSE}
+```{r visualize the module, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE}
 graphPlot(GRN,result,"Gata1","erythroblasts_stage2")
 ```
 
