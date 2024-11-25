@@ -125,297 +125,309 @@
 #'
 #' @export
 #'
-RunNetID <- function(sce,min_counts = 10,varID_res=NULL, knn = 30, regulators = NULL, targets = NULL,netID_params = list(), velo=TRUE,dynamicInfer=TRUE,maxState = 5,cut_off = 2,work_dir = NULL, no_cores = NULL){
-  if(!is.null(work_dir)){setwd(work_dir)}
-  suppressPackageStartupMessages(require("mclust"))
-  suppressPackageStartupMessages(require("GENIE3"))
+ RunNetID <- function (sce, min_counts = 10, varID_res = NULL, knn = 30, regulators = NULL, 
+    targets = NULL, netID_params = list(), velo = TRUE, dynamicInfer = TRUE, 
+    maxState = 5, cut_off = 2, work_dir = NULL, no_cores = NULL) 
+{
 
-  env = environment()
-  netID_params <- check_netID_params(netID_params)
-  list2env(netID_params,env)
-  
-  
-  ## input object: SingleCellExperiments, SCseq or Seurat
-  if(class(sce) %in% c("SCseq","Seurat","SingleCellExperiment") == FALSE){
-	   stop("input object needs to be SCseq,Seurat or SingleCellExperiment object, please check again!")
-  }
-  writeLines(paste("Input object is ",class(sce),"...",sep=""))
-  if(class(sce) == "SingleCellExperiment"){
-    a = "counts" %in% names(SummarizedExperiment::assays(sce))
-	b = "spliced" %in% names(SummarizedExperiment::assays(sce))
-    if (a){
-	   sce <- sce[,colSums(as.matrix(SummarizedExperiment::assays(sce)$counts))>0]
-	   X <- as.matrix(SummarizedExperiment::assays(sce)$counts)
-	}
-	if (b){
-	   sce <- sce[,colSums(as.matrix(SummarizedExperiment::assays(sce)$spliced))>0]
-	   X <- as.matrix(SummarizedExperiment::assays(sce)$spliced)
-	}
-	if (!a & !b){
-	   stop("SingleCellExperiment object has no spliced or counts assay, please check again!")
-	}
-  }
-  if(class(sce) == "Seurat"){
-    a = "RNA" %in% names(sce@assays)
-	b = "spliced" %in% names(sce@assays)
-	if (a){
-	   sce <- sce[,colSums(as.matrix(Seurat::GetAssayData(sce,assay = "RNA",slot = "counts")))>0]
-	   X <- as.matrix(Seurat::GetAssayData(sce,assay = "RNA",slot = "counts"))
-	}
-	if (b){
-	   sce <- sce[,colSums(as.matrix(Seurat::GetAssayData(sce,assay = "spliced",slot = "counts")))>0]
-	   X <- as.matrix(Seurat::GetAssayData(sce,assay = "spliced",slot = "counts"))
-	}
-	if (!a & !b){
-	   stop("SingleCellExperiment object has no spliced or RNA assay, please check again!")
-	}
-  }
-  if(class(sce) == "SCseq"){
-      X <- as.matrix(RaceID::getExpData(sce))
-	  X <- X[,colSums(X)>0]
-	  if(velo & dynamicInfer){
-	    warning("Using velocity dynamic information, but SCseq only save one assay, better use SingleCellExperiment and Seurat!")
-	  }
-  }
-  
-  X <- X[!duplicated(rownames(X)),]
-  X <- X[,colSums(X)>0]
-  if (is.null(g)){
-  g <- rownames(X)[rowSums(X)>min_counts]
-  }
-  
-
-  if(dynamicInfer){
-    sc <- reticulate::import('scanpy', convert = FALSE)
-    adata_exp <- sc$read_h5ad("./output/FateRes.h5ad")
-    if(velo){
-      adata_velo <- sc$read_h5ad("./output_velo/FateRes.h5ad")
-      velo_m <- t(reticulate::py_to_r(adata_velo$layers["velocity"]))
-      rownames(velo_m) <- rownames(reticulate::py_to_r(adata_velo$var))
-      colnames(velo_m) <- rownames(reticulate::py_to_r(adata_velo$obs))
+    if (!is.null(work_dir)) {
+        setwd(work_dir)
     }
-
-    GEP <- t(reticulate::py_to_r(adata_exp$X))
-    rownames(GEP) <- rownames(reticulate::py_to_r(adata_exp$var))
-    colnames(GEP) <- rownames(reticulate::py_to_r(adata_exp$obs))
-    g <- rownames(GEP)
-  }
-
-  # Build GRN
-  X <- as.matrix(X)
-  if(is.null(varID_res)){
-    if(length(intersect(list.files(getwd()),"varID_res.rds")) == 1){
-      writeLines("Find VarID object at local dictionary, Read VarID object...")
-      varID_res <- readRDS("varID_res.rds")
-    }else{
-      writeLines("Build VarID object...")
-      if (is.null(no_cores)){
-            no_cores <- max(1, parallel::detectCores() - 2)
-      }
-      no_cores <- min(no_cores, parallel::detectCores())
-	  
-	  if (SNN) {
-	    if (class(sce) != "Seurat"){stop("SNN requires input Seurat object!")}else{
-		  writeLines("Perform pruning on Seurat SNN graph...")
-		  varID_res   <- RaceID::pruneKnn(sce[g,],do.prune = do.prune, no_cores=no_cores, pca.scale = TRUE, FSelect = TRUE)
-		}
-	  }else{
-      varID_res   <- RaceID::pruneKnn(X[g,],knn=as.numeric(knn),do.prune = do.prune, no_cores=no_cores, pca.scale = TRUE, FSelect = TRUE)
-	  }
-      saveRDS(varID_res,file="varID_res.rds")
+    suppressPackageStartupMessages(require("mclust"))
+    suppressPackageStartupMessages(require("GENIE3"))
+    env = environment()
+    netID_params <- check_netID_params(netID_params)
+    list2env(netID_params, env)
+    if (class(sce) %in% c("SCseq", "Seurat", "SingleCellExperiment") == 
+        FALSE) {
+        stop("input object needs to be SCseq,Seurat or SingleCellExperiment object, please check again!")
     }
-  }
-  regulators <- intersect(regulators,g);targets <- intersect(targets,g)
-
-  writeLines("Using NetID to perform skeleton estimation...")
-  skeleton <- RunNetID2(spliced = X[g,],varID_obj = varID_res,var=var,sampled_cells = sampled_cells, sketch.method = sketch.method,n_cell = n_cell,ndim = ndim,regulators = regulators,targets = targets,Threshold_Num = Threshold_Num,normalize = normalize,prior_net = prior_net)
-
-  if(dynamicInfer){
-    ##########################
-    ## extract phase information from velocity vector
-    ## load normalized GEP
-    # load fate probability
-    fate_prob <- reticulate::py_to_r(adata_exp$obs)
-    ID <- colnames(fate_prob)[-ncol(fate_prob)]
-    barcode <- rownames(fate_prob)
-    fate_prob <- as.matrix(fate_prob[,-ncol(fate_prob)])
-    rownames(fate_prob) <- barcode
-    colnames(fate_prob) <- ID
-
-    if(velo){
-      fate_prob_velo <- reticulate::py_to_r(adata_velo$obs)
-      ID <- colnames(fate_prob_velo)[-ncol(fate_prob_velo)]
-      barcode <- rownames(fate_prob_velo)
-      fate_prob_velo <- as.matrix(fate_prob_velo[,-ncol(fate_prob_velo)])
-      rownames(fate_prob_velo) <- barcode
-      colnames(fate_prob_velo) <- ID
-
-      ### generate aggregate velo_m
-      velo_m_aggre <- apply(skeleton$y.final,2,function(x){  f <- colnames(velo_m) %in% rownames(skeleton$y.final)[ x > 0]; rowMeans(as.matrix(velo_m[,f]))} )
-      colnames(velo_m_aggre) <- colnames(skeleton$y.final)
-      rownames(velo_m_aggre) <- rownames(velo_m)
+    writeLines(paste("Input object is ", class(sce), "...", sep = ""))
+    if (class(sce) == "SingleCellExperiment") {
+        a = "counts" %in% names(SummarizedExperiment::assays(sce))
+        b = "spliced" %in% names(SummarizedExperiment::assays(sce))
+        if (a) {
+            sce <- sce[, colSums(as.matrix(SummarizedExperiment::assays(sce)$counts)) > 
+                0]
+            X <- as.matrix(SummarizedExperiment::assays(sce)$counts)
+        }
+        if (b) {
+            sce <- sce[, colSums(as.matrix(SummarizedExperiment::assays(sce)$spliced)) > 
+                0]
+            X <- as.matrix(SummarizedExperiment::assays(sce)$spliced)
+        }
+        if (!a & !b) {
+            stop("SingleCellExperiment object has no spliced or counts assay, please check again!")
+        }
     }
-
-    cat("Classify lineage for palantir fate prob...\n")
-    if(ncol(fate_prob)==1){
-      LineageClass <- LineageClassifer(fate_prob,maxState = maxState, cut_off = cut_off)
-    }else{
-      LineageClass <- LineageClassifer(fate_prob,maxState = maxState, cut_off = cut_off)
+    if (class(sce) == "Seurat") {
+        a = "RNA" %in% names(sce@assays)
+        b = "spliced" %in% names(sce@assays)
+        if (a) {
+            sce <- sce[, colSums(as.matrix(Seurat::GetAssayData(sce, 
+                assay = "RNA", layer = "counts"))) > 0]
+            X <- as.matrix(Seurat::GetAssayData(sce, assay = "RNA", 
+                layer = "counts"))
+        }
+        if (b) {
+            sce <- sce[, colSums(as.matrix(Seurat::GetAssayData(sce, 
+                assay = "spliced", layer = "counts"))) > 0]
+            X <- as.matrix(Seurat::GetAssayData(sce, assay = "spliced", 
+                layer = "counts"))
+        }
+        if (!a & !b) {
+            stop("SingleCellExperiment object has no spliced or RNA assay, please check again!")
+        }
     }
-
-    if(velo){
-      cat("Classify lineage for cellrank fate prob...\n")
-      if(ncol(fate_prob_velo)==1){
-        LineageClass_velo <- list()
-        LineageClass_velo[[colnames(fate_prob_velo)]] <- rownames(fate_prob_velo)
-      }else{
-        LineageClass_velo <- LineageClassifer(fate_prob_velo,maxState = maxState)
-      }
+    if (class(sce) == "SCseq") {
+        X <- as.matrix(RaceID::getExpData(sce, genes=rownames(sce@expdata)))
+        X <- X[, colSums(X) > 0]
+        if (velo & dynamicInfer) {
+            warning("Using velocity dynamic information, but SCseq only save one assay, better use SingleCellExperiment and Seurat!")
+        }
     }
-
-    ########
-    pseudotime <- reticulate::py_to_r(adata_exp$obs)$pseudotime
-    names(pseudotime) <- rownames(reticulate::py_to_r(adata_exp$obs))
-
-    if(velo){
-      velocity_pseudotime <- reticulate::py_to_r(adata_velo$obs)$velocity_pseudotime
-      names(velocity_pseudotime) <- rownames(reticulate::py_to_r(adata_velo$obs))
+    X <- X[!duplicated(rownames(X)), ]
+    X <- X[, colSums(X) > 0]
+    if (is.null(g)) {
+        g <- rownames(X)[rowSums(X) > min_counts]
     }
-  }
-  ########
-  writeLines("Done...")
-  res <- list()
-  if(dynamicInfer){
-    res$fate_prob = fate_prob;res$LineageClass = LineageClass
-    if(velo){res$fate_prob_velo = fate_prob_velo;res$LineageClass_velo = LineageClass_velo}
-    res$pseudotime <- pseudotime
-    if(velo) res$velocity_pseudotime <- velocity_pseudotime
-    if(velo) res$velo_m <- velo_m
-    if(velo) res$velo_m_aggre <- velo_m_aggre
-    res$GEP <- GEP
-  }
-  res$skeleton <- skeleton
-  res$varID_res <- varID_res
-  return(res)
+    if (dynamicInfer) {
+        sc <- reticulate::import("scanpy", convert = FALSE)
+        adata_exp <- sc$read_h5ad("./output/FateRes.h5ad")
+        if (velo) {
+            adata_velo <- sc$read_h5ad("./output_velo/FateRes.h5ad")
+            velo_m <- t(reticulate::py_to_r(adata_velo$layers["velocity"]))
+            rownames(velo_m) <- rownames(reticulate::py_to_r(adata_velo$var))
+            colnames(velo_m) <- rownames(reticulate::py_to_r(adata_velo$obs))
+        }
+        GEP <- t(reticulate::py_to_r(adata_exp$X))
+        rownames(GEP) <- rownames(reticulate::py_to_r(adata_exp$var))
+        colnames(GEP) <- rownames(reticulate::py_to_r(adata_exp$obs))
+        g <- rownames(GEP)
+    }
+    X <- as.matrix(X)
+    if (is.null(varID_res)) {
+        if (length(intersect(list.files(getwd()), "varID_res.rds")) == 1) {
+            writeLines("Find VarID object at local dictionary, Read VarID object...")
+            varID_res <- readRDS("varID_res.rds")
+        } else {
+            writeLines("Build VarID object...")
+            if (is.null(no_cores)) {
+                no_cores <- max(1, parallel::detectCores() - 
+                  2)
+            }
+            no_cores <- min(no_cores, parallel::detectCores())
+            if (SNN) {
+                if (class(sce) != "Seurat") {
+                  stop("SNN requires input Seurat object!")
+                } else {
+                  writeLines("Perform pruning on Seurat SNN graph...")
+                  varID_res <- RaceID::pruneKnn(sce[g, ], do.prune = do.prune, 
+                    no_cores = no_cores, pca.scale = TRUE, FSelect = TRUE)
+                }
+            } else {
+                varID_res <- RaceID::pruneKnn(X[g, ], knn = as.numeric(knn), 
+                  do.prune = do.prune, no_cores = no_cores, pca.scale = TRUE, 
+                  FSelect = TRUE)
+            }
+            saveRDS(varID_res, file = "varID_res.rds")
+        }
+    }
+    regulators <- intersect(regulators, g)
+    targets <- intersect(targets, g)
+    writeLines("Using NetID to perform skeleton estimation...")
+    skeleton <- RunNetID2(spliced = X[g, ], varID_obj = varID_res, 
+        var = var, sampled_cells = sampled_cells, sketch.method = sketch.method, 
+        n_cell = n_cell, ndim = ndim, regulators = regulators, 
+        targets = targets, Threshold_Num = Threshold_Num, normalize = normalize, 
+        prior_net = prior_net)
+    if (dynamicInfer) {
+        fate_prob <- reticulate::py_to_r(adata_exp$obs)
+        ID <- colnames(fate_prob)[-ncol(fate_prob)]
+        barcode <- rownames(fate_prob)
+        fate_prob <- as.matrix(fate_prob[, -ncol(fate_prob)])
+        rownames(fate_prob) <- barcode
+        colnames(fate_prob) <- ID
+        if (velo) {
+            fate_prob_velo <- reticulate::py_to_r(adata_velo$obs)
+            ID <- colnames(fate_prob_velo)[-ncol(fate_prob_velo)]
+            barcode <- rownames(fate_prob_velo)
+            fate_prob_velo <- as.matrix(fate_prob_velo[, -ncol(fate_prob_velo)])
+            rownames(fate_prob_velo) <- barcode
+            colnames(fate_prob_velo) <- ID
+            velo_m_aggre <- apply(skeleton$y.final, 2, function(x) {
+                f <- colnames(velo_m) %in% rownames(skeleton$y.final)[x > 
+                  0]
+                rowMeans(as.matrix(velo_m[, f]))
+            })
+            colnames(velo_m_aggre) <- colnames(skeleton$y.final)
+            rownames(velo_m_aggre) <- rownames(velo_m)
+        }
+        cat("Classify lineage for palantir fate prob...\n")
+        if (ncol(fate_prob) == 1) {
+            LineageClass <- LineageClassifer(fate_prob, maxState = maxState, 
+                cut_off = cut_off)
+        }
+        else {
+            LineageClass <- LineageClassifer(fate_prob, maxState = maxState, 
+                cut_off = cut_off)
+        }
+        if (velo) {
+            cat("Classify lineage for cellrank fate prob...\n")
+            if (ncol(fate_prob_velo) == 1) {
+                LineageClass_velo <- list()
+                LineageClass_velo[[colnames(fate_prob_velo)]] <- rownames(fate_prob_velo)
+            }
+            else {
+                LineageClass_velo <- LineageClassifer(fate_prob_velo, 
+                  maxState = maxState)
+            }
+        }
+        pseudotime <- reticulate::py_to_r(adata_exp$obs)$pseudotime
+        names(pseudotime) <- rownames(reticulate::py_to_r(adata_exp$obs))
+        if (velo) {
+            velocity_pseudotime <- reticulate::py_to_r(adata_velo$obs)$velocity_pseudotime
+            names(velocity_pseudotime) <- rownames(reticulate::py_to_r(adata_velo$obs))
+        }
+    }
+    writeLines("Done...")
+    res <- list()
+    if (dynamicInfer) {
+        res$fate_prob = fate_prob
+        res$LineageClass = LineageClass
+        if (velo) {
+            res$fate_prob_velo = fate_prob_velo
+            res$LineageClass_velo = LineageClass_velo
+        }
+        res$pseudotime <- pseudotime
+        if (velo) 
+            res$velocity_pseudotime <- velocity_pseudotime
+        if (velo) 
+            res$velo_m <- velo_m
+        if (velo) 
+            res$velo_m_aggre <- velo_m_aggre
+        res$GEP <- GEP
+    }
+    res$skeleton <- skeleton
+    res$varID_res <- varID_res
+    return(res)
 }
 
 
-RunNetID2 <- function(spliced, varID_obj,var=FALSE, sampled_cells=NULL,sketch.method = "SeuratSketching",ndim = 50, n_cell = 500, Threshold_Num = 5, regulators = NULL, targets = NULL,normalize=TRUE,prior_net = NULL){
 
-  ### perform geosketch sampling on expression profile
-  if(is.null(sampled_cells)){
-    exp.m = spliced
-    sketch.indices = Sketching(exp.m = exp.m, varID_obj = varID_obj, var = var,n_cell = n_cell, sketch.method = sketch.method, ndim = ndim)
-  }
-
-  pvalue <- 0.01
-  if(is.null(sampled_cells)){id <- sampled_cells <- unlist(sketch.indices)}else{
-    id <- sampled_cells}
-
-  x  <- t(varID_obj$NN)[id,]
-  y  <- Matrix::Matrix(rep(0,ncol(varID_obj$NN)*length(id)), ncol=ncol(varID_obj$NN))
-  rownames(y) <- rownames(x)
-  colnames(y) <- colnames(varID_obj$NN)
-
-  writeLines("prune sampled neighbourhoods according to q-value...")
-  for ( i in rownames(y) ){
-    p <- varID_obj$pvM[,i]
-    p[p < pvalue] <- 0
-    y[i,varID_obj$NN[,i]] <- c(1,p)
-  }
-  #print(y)
-  #print(class(y))
-  ## pruned p-value matrix. p-values of pruned neighbours are set to 0.
-  y <- as.matrix( t(as.matrix(y) ))
-  y.prune <- y
-  y.prune[y.prune!=0] <- 1
-
-  pvalue <- 0
-  x  <- t(varID_obj$NN)[id,]
-  y  <- Matrix::Matrix(rep(0,ncol(varID_obj$NN)*length(id)), ncol=ncol(varID_obj$NN))
-  rownames(y) <- rownames(x)
-  colnames(y) <- colnames(varID_obj$NN)
-
-  writeLines("assign weight for edges using p-value...")
-  for ( i in rownames(y) ){
-    p <- varID_obj$pvM.raw[,i]
-    y[i,varID_obj$NN[,i]] <- c(1,p)
-  }
-
-  y <- as.matrix( t(as.matrix(y) ) )
-  y.unprune <- y;rm(y);gc()
-
-  y.weighted <- y.unprune * y.prune # a weighted and pruned cell-cell graph
-
-  cs <- rowSums(y.weighted)
-  f <- cs > 0
-  y.weighted <- y.weighted[f,]
-
-  count <- apply(y.weighted,2,function(x){sum(x!=0)})
-  y.final <- matrix(0,nrow=nrow(y.weighted),ncol=ncol(y.weighted))
-  colnames(y.final) <- colnames(y.weighted)
-  rownames(y.final) <- rownames(y.weighted)
-  id <- rownames(y.weighted)[rownames(y.weighted) %in% colnames(y.weighted) == FALSE]
-  for(i in id){
-    vec <- which(y.weighted[i,] == max(y.weighted[i,]))
-    vec_count <- count[vec]
-    y.final[i,vec[which(vec_count == min(vec_count))]] <- 1
-  }
-
-  y.final[colnames(y.final),colnames(y.final)] <- diag(ncol(y.final))
-  count <- function(x) { sum(x!=0)}
-  #effectSize[[o]] <- apply(y.final,2,count)
-  y.final <- y.final[,apply(y.final,2,count)>Threshold_Num]
-
-  #####################################
-  #Generate NetID expression profile
-  ks.final <- apply(y.final,2,function(x){  f <- colnames(spliced) %in% rownames(y.final)[ x > 0]; rowMeans(as.matrix(spliced[,f]))} )
-  colnames(ks.final) <- colnames(y.final)
-  rownames(ks.final) <- rownames(spliced)
-  g <- unique(c(targets,regulators))
-  ks.final <- ks.final[g,]
-  if(normalize){s <- colnames(ks.final);
-  g <- rownames(ks.final);
-  ks.final <- ks.final %*% diag(10^6/colSums(ks.final));
-  colnames(ks.final) <- s
-  rownames(ks.final) <- g
-  }
-  #########################################
-  writeLines(paste("aggregated matrix: the number of genes:",nrow(ks.final),"; the number of samples:",ncol(ks.final),sep=""))
-
-  g_c <- GENIE3::GENIE3(log2(ks.final+1),nCores=12,verbose=TRUE,nTrees=500,regulators = regulators, targets = targets)
-
-
-  ### filtering the network according to the weight
-  g_c_raw <- g_c
-  
-  g_c[g_c<0.001] <- 0
-  g_count <- g_c
-  g_count[g_count!=0] <- 1
-  rank_n <- apply(as.matrix(rowSums(g_count)),1,function(x){min(x,50)})
-  for(i in 1:nrow(g_c)){
-    g_count[i,][order(g_c[i,],decreasing=TRUE)[1:rank_n[i]]] <- 2
-  }
-  g_count[g_count!=0] = g_count[g_count!=0] - 1
-
-  ### if directed = TRUE, means row is regulators, column is targets, the direction is determined, we would
-  ### have a directed network
-
-  ### if directed = FALSE, means row and column is the same, we would have a undirected network
-
-
-  if(!is.null(prior_net)){
-    g_net = prior_net + g_count
-    g_net[g_net!=0] <- g_net[g_net!=0] - 1
-  }else{
-    g_net = g_count
-  }
-
-
-  ### return the results
-  res <- list(skeleton = g_net,g_c = g_c, GENIE3_net = g_c_raw,metaExp = ks.final,metaCells = sampled_cells,y.final = y.final)
-  return(res)
+RunNetID2 <- function (spliced, varID_obj, var = FALSE, sampled_cells = NULL, 
+    sketch.method = "SeuratSketching", ndim = 50, n_cell = 500, 
+    Threshold_Num = 5, regulators = NULL, targets = NULL, normalize = TRUE, 
+    prior_net = NULL) 
+{
+    if (is.null(sampled_cells)) {
+        exp.m = spliced
+        sketch.indices = Sketching(exp.m = exp.m, varID_obj = varID_obj, 
+            var = var, n_cell = n_cell, sketch.method = sketch.method, 
+            ndim = ndim)
+    }
+    pvalue <- 0.01
+    if (is.null(sampled_cells)) {
+        id <- sampled_cells <- unlist(sketch.indices)
+    }    else {
+        id <- sampled_cells
+    }
+    x <- t(varID_obj$NN)[id, ]
+    y <- Matrix::Matrix(rep(0, ncol(varID_obj$NN) * length(id)), 
+        ncol = ncol(varID_obj$NN))
+    rownames(y) <- rownames(x)
+    colnames(y) <- colnames(varID_obj$NN)
+    writeLines("prune sampled neighbourhoods according to q-value...")
+    for (i in rownames(y)) {
+        f <- varID_obj$NN[, i] != 0
+        p <- varID_obj$pvM[, i]
+        p[p < pvalue] <- 0
+        y[i, varID_obj$NN[f, i]] <- c(1, p)[f]
+    }
+    y <- as.matrix(t(as.matrix(y)))
+    y.prune <- y
+    y.prune[y.prune != 0] <- 1
+    pvalue <- 0
+    x <- t(varID_obj$NN)[id, ]
+    y <- Matrix::Matrix(rep(0, ncol(varID_obj$NN) * length(id)), 
+        ncol = ncol(varID_obj$NN))
+    rownames(y) <- rownames(x)
+    colnames(y) <- colnames(varID_obj$NN)
+    writeLines("assign weight for edges using p-value...")
+    for (i in rownames(y)) {
+        f <- varID_obj$NN[, i] != 0
+        p <- varID_obj$pvM.raw[, i]
+        y[i, varID_obj$NN[f, i]] <- c(1, p)[f]
+    }
+    y <- as.matrix(t(as.matrix(y)))
+    y.unprune <- y
+    rm(y)
+    gc()
+    y.weighted <- y.unprune * y.prune
+    cs <- rowSums(y.weighted)
+    f <- cs > 0
+    y.weighted <- y.weighted[f, ]
+    count <- apply(y.weighted, 2, function(x) {
+        sum(x != 0)
+    })
+    y.final <- matrix(0, nrow = nrow(y.weighted), ncol = ncol(y.weighted))
+    colnames(y.final) <- colnames(y.weighted)
+    rownames(y.final) <- rownames(y.weighted)
+    id <- rownames(y.weighted)[rownames(y.weighted) %in% colnames(y.weighted) == 
+        FALSE]
+    for (i in id) {
+        vec <- which(y.weighted[i, ] == max(y.weighted[i, ]))
+        vec_count <- count[vec]
+        y.final[i, vec[which(vec_count == min(vec_count))]] <- 1
+    }
+    y.final[colnames(y.final), colnames(y.final)] <- diag(ncol(y.final))
+    count <- function(x) {
+        sum(x != 0)
+    }
+    y.final <- y.final[, apply(y.final, 2, count) > Threshold_Num]
+    ks.final <- apply(y.final, 2, function(x) {
+        f <- colnames(spliced) %in% rownames(y.final)[x > 0]
+        rowMeans(as.matrix(spliced[, f]))
+    })
+    colnames(ks.final) <- colnames(y.final)
+    rownames(ks.final) <- rownames(spliced)
+    g <- unique(c(targets, regulators))
+    ks.final <- ks.final[g, ]
+    if (normalize) {
+        s <- colnames(ks.final)
+        g <- rownames(ks.final)
+        ks.final <- ks.final %*% diag(10^6/colSums(ks.final))
+        colnames(ks.final) <- s
+        rownames(ks.final) <- g
+    }
+    writeLines(paste("aggregated matrix: the number of genes:", 
+        nrow(ks.final), "; the number of samples:", ncol(ks.final), 
+        sep = ""))
+    g_c <- GENIE3::GENIE3(log2(ks.final + 1), nCores = 12, verbose = TRUE, 
+        nTrees = 500, regulators = regulators, targets = targets)
+    g_c_raw <- g_c
+    g_c[g_c < 0.001] <- 0
+    g_count <- g_c
+    g_count[g_count != 0] <- 1
+    rank_n <- apply(as.matrix(rowSums(g_count)), 1, function(x) {
+        min(x, 50)
+    })
+    for (i in 1:nrow(g_c)) {
+        g_count[i, ][order(g_c[i, ], decreasing = TRUE)[1:rank_n[i]]] <- 2
+    }
+    g_count[g_count != 0] = g_count[g_count != 0] - 1
+    if (!is.null(prior_net)) {
+        g_net = prior_net + g_count
+        g_net[g_net != 0] <- g_net[g_net != 0] - 1
+    }
+    else {
+        g_net = g_count
+    }
+    res <- list(skeleton = g_net, g_c = g_c, GENIE3_net = g_c_raw, 
+        metaExp = ks.final, metaCells = sampled_cells, y.final = y.final)
+    return(res)
 }
+
 
 LineageClassifer <- function(fate_prob,cut_off=2,maxState = 5, diffvar=TRUE, unique_assign = FALSE){
   sampleID <- rownames(fate_prob)
@@ -485,41 +497,44 @@ LineageClassifer <- function(fate_prob,cut_off=2,maxState = 5, diffvar=TRUE, uni
   lineage_list
 }
 
-Sketching <- function(exp.m,varID_obj,var,n_cell,sketch.method,ndim){
-  pca <- t(varID_obj$dimRed)
-  #pca <- t(apply(pca,1,function(x){x/norm(x,"2")}))
-  sample_m <- NULL
-  if(sketch.method == "SeuratSketching"){
-    object <- Seurat::CreateSeuratObject(exp.m)
-    object <- Seurat::NormalizeData(object)
-    object <- Seurat::FindVariableFeatures(object)
-  }
-  if(sketch.method == "geosketch"){
-    if(!is.null(ndim)){
-      geneID <- rownames(exp.m)
-      sampleID <- colnames(exp.m)
-      #exp.m <- exp.m %*% diag(10^6/colSums(exp.m))
-      rownames(exp.m) <- geneID
-      colnames(exp.m) <- sampleID
+Sketching<- function (exp.m, varID_obj, var, n_cell, sketch.method, ndim) 
+{
+    pca <- t(varID_obj$dimRed)
+    sample_m <- NULL
+    if (sketch.method == "SeuratSketching") {
+        object <- Seurat::CreateSeuratObject(exp.m)
+        object <- Seurat::NormalizeData(object)
+        object <- Seurat::FindVariableFeatures(object)
     }
-    if(var){X = t(log(exp.m[varID_obj$B$genes,]+1))}else{
-      X = t(log(exp.m[rownames(varID_obj$regData$pearsonRes),]+1))}
-    geosketch <- reticulate::import('geosketch')
-    s <- rsvd::rsvd(X, k=ndim)
-    pca <- s$u %*% diag(s$d)
-  }
-
-  if(sketch.method == "geosketch"){
-    X.pcs <- pca
-    sketch.indices <- geosketch$gs(X.pcs, as.integer(n_cell), one_indexed = TRUE)
-  }
-  if(sketch.method == "SeuratSketching"){
-    atoms <- Seurat::LeverageScoreSampling(object = object, num.cells = n_cell)
-    sketch.indices <- which(colnames(object) %in% colnames(atoms))
-  }
-  if(sketch.method == "random"){
-    sketch.indices <- sample(1:ncol(exp.m),n_cell,replace=FALSE)
-  }
-  sketch.indices <- unlist(sketch.indices)
-  sketch.indices
+    if (sketch.method == "geosketch") {
+        if (!is.null(ndim)) {
+            geneID <- rownames(exp.m)
+            sampleID <- colnames(exp.m)
+            rownames(exp.m) <- geneID
+            colnames(exp.m) <- sampleID
+        }
+        if (var) {
+            X = t(log(exp.m[varID_obj$B$genes, ] + 1))
+        }   else {
+            X = t(log(exp.m[varID_obj$pars$genes, ] + 1))
+        }
+        geosketch <- reticulate::import("geosketch")
+        s <- rsvd::rsvd(X, k = ndim)
+        pca <- s$u %*% diag(s$d)
+    }
+    if (sketch.method == "geosketch") {
+        X.pcs <- pca
+        sketch.indices <- geosketch$gs(X.pcs, as.integer(n_cell), 
+            one_indexed = TRUE)
+    }
+    if (sketch.method == "SeuratSketching") {
+        atoms <- Seurat::LeverageScoreSampling(object = object, 
+            num.cells = n_cell)
+        sketch.indices <- which(colnames(object) %in% colnames(atoms))
+    }
+    if (sketch.method == "random") {
+        sketch.indices <- sample(1:ncol(exp.m), n_cell, replace = FALSE)
+    }
+    sketch.indices <- unlist(sketch.indices)
+    sketch.indices
 }

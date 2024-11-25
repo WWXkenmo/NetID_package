@@ -2,11 +2,11 @@ Package: NetID
 Type: Package
 Title: A Meta-cell Base Method to Infer Fate Specific Gene Regulatory
         Network from Single Cell Gene Expression Data
-Version: 0.1.0
+Version: 0.1.1
 biocViews:
 Imports: Matrix, lmtest, glmnet, RobustRankAggreg, irlba, rsvd,
         reticulate, Seurat, Hmisc, mclust, pracma, doParallel, doRNG,
-        RaceID (>= 0.2.9), igraph, rARPACK
+        RaceID (== 0.3.9), igraph, rARPACK
 Suggests: GENIE3, SingleCellExperiment, knitr, rmarkdown
 VignetteBuilder: knitr
 Author: Weixu Wang and Dominic Grün
