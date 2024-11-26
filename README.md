@@ -42,6 +42,7 @@ pip install pandas==1.5.3
 pip install palantir==1.0.1
 pip uninstall numpy
 pip install numpy==1.23.5
+pip install scipy==1.10.2
 ```
 #### install cytotrace and scent to determine the root cell
 ```
