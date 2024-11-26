@@ -34,12 +34,12 @@ dyn.out <- RunNetID(sce, regulators = TF[,1], targets = TF[,1],
 ## ----Check NetID Parameters, eval=FALSE, echo=TRUE, warning=FALSE-------------
 #  ?check_netID_params()
 
-## ----Run NetID (geosketch results), eval=FALSE, echo=TRUE, warning=FALSE,message=FALSE----
-#  # install python "geosketch"
-#  dyn.out <- RunNetID(sce, regulators = TF[,1], targets = TF[,1],
-#                      netID_params = list(sketch.method = "geosketch",
-#                                          normalize=FALSE),
-#                      dynamicInfer = FALSE)
+## ----Run NetID (geosketch results), eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE----
+# install python "geosketch"
+dyn.out <- RunNetID(sce, regulators = TF[,1], targets = TF[,1],
+                    netID_params = list(sketch.method = "geosketch",
+                                        normalize=FALSE), 
+                    dynamicInfer = FALSE)
 
 ## ----return NetID outputs, eval=FALSE, echo=TRUE, warning=FALSE,message=FALSE----
 #  names(dyn.out)
@@ -60,10 +60,16 @@ Se <- RunPCA(Se, features = VariableFeatures(object = Se))
 Se <- FindNeighbors(Se, dims = 1:10)
 Se <- FindClusters(Se, resolution = 0.5)
 
-## ----Run NetID with SNN, eval=FALSE, echo=TRUE, warning=FALSE,message=FALSE----
-#  dyn.out <- RunNetID(Se, regulators = TF[,1], targets = TF[,1],
-#                      netID_params = list(normalize=FALSE, SNN = TRUE),
-#                      dynamicInfer = FALSE)
+Se@meta.data$celltype <- celltype
+## or use 'seurat_clusters' as cluster_label in FateDynamic
+
+## ----Run NetID with SNN, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE----
+dyn.out <- RunNetID(Se, regulators = TF[,1], targets = TF[,1],
+                    netID_params = list(normalize=FALSE, SNN = TRUE), 
+                    dynamicInfer = FALSE)
+
+## ----reset inout, eval=FALSE, echo=TRUE, warning=FALSE, message=FALSE---------
+#  sce <- Se
 
 ## ----Run model, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE-------------
 FateDynamic(sce,
@@ -110,6 +116,9 @@ dyn.out <- RunNetID(sce,
 ## ----plot cell fate probability, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE----
 ## load basis information
 dyn.out$basis <- reducedDim(sce, "PCA")[,c(1,2)]
+
+## For SCseq, e.g.
+## dyn.out$basis <- sce@umap
 
 library(cowplot)
 p1 = plotFateProb(dyn.out,basis=dyn.out$basis,basis_name = "PCA",

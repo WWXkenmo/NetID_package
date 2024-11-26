@@ -497,6 +497,8 @@ LineageClassifer <- function(fate_prob,cut_off=2,maxState = 5, diffvar=TRUE, uni
   lineage_list
 }
 
+
+
 Sketching<- function (exp.m, varID_obj, var, n_cell, sketch.method, ndim) 
 {
     pca <- t(varID_obj$dimRed)
@@ -514,9 +516,9 @@ Sketching<- function (exp.m, varID_obj, var, n_cell, sketch.method, ndim)
             colnames(exp.m) <- sampleID
         }
         if (var) {
-            X = t(log(exp.m[varID_obj$B$genes, ] + 1))
+            X = t(log(exp.m[intersect(varID_obj$pars$genes,rownames(exp.m)), ] + 1))
         }   else {
-            X = t(log(exp.m[varID_obj$pars$genes, ] + 1))
+            X = t(log(exp.m[intersect(varID_obj$pars$genes,rownames(exp.m)), ] + 1))
         }
         geosketch <- reticulate::import("geosketch")
         s <- rsvd::rsvd(X, k = ndim)
