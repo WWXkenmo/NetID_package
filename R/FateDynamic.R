@@ -24,6 +24,7 @@
 FateDynamic <- function (sce, global_params = list(), palantir_params = list(), 
     cellrank_params = list(), work_dir = NULL) 
 {
+    require("Matrix")
     if (!is.null(work_dir)) {
         setwd(work_dir)
     }
@@ -43,7 +44,7 @@ FateDynamic <- function (sce, global_params = list(), palantir_params = list(),
         }
    
     
-        sce <- sce[, colSums(SummarizedExperiment::assays(sce)[[assaySp]]) > 0]
+        sce <- sce[, colSums(as.matrix(SummarizedExperiment::assays(sce)[[assaySp]])) > 0]
         X <- SummarizedExperiment::assays(sce)[[assaySp]]
         obs <- as.data.frame(SummarizedExperiment::colData(sce))
         var <- data.frame(genes = rownames(sce))
