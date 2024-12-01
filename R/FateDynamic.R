@@ -34,8 +34,8 @@ FateDynamic <- function (sce, global_params = list(), palantir_params = list(),
     scv <- reticulate::import("scvelo", convert = FALSE)
 
     if ( class(sce) == "SingleCellExperiment" | class(sce) == "Seurat" ){
-        if ( class(sce) == "Seurat" ) sce <- as.SingleCellExperiment(sce)
-        if ( ! ( "spliced" %in% names(assays(sce)) & "unspliced" %in% names(assays(sce)) ) ){
+        if ( class(sce) == "Seurat" ) sce <- Seurat::as.SingleCellExperiment(sce)
+        if ( ! ( "spliced" %in% names(SummarizedExperiment::assays(sce)) & "unspliced" %in% names(SummarizedExperiment::assays(sce)) ) ){
             assaySp = "counts"
             assayUn = NA
         }else{
@@ -70,7 +70,7 @@ FateDynamic <- function (sce, global_params = list(), palantir_params = list(),
         assaySp = "counts"
         assayUn = NA
               
-        X  <- getExpData(sce,genes=rownames(sce@expdata))
+        X  <- SCseq::getExpData(sce,genes=rownames(sce@expdata))
     
         obs <- data.frame(cpart= as.character(sce@cpart))
         rownames(obs) <- names(sce@cpart)

@@ -46,31 +46,3 @@ pip install numpy==1.23.5
 #### install cytotrace and scent to determine the root cell
 ```
 devtools::install_github("aet21/SCENT")
-```
-
-### Citation
-```
-@article{PUSH:72058,
-  author = {Wang, W. and Wang, Y. and Lyu, R. and Gr{\"u}n, D.},
-  title = {{Scalable identification of lineage-specific gene regulatory networks from metacells with NetID.}},
-  journal = {Genome Biol.},
-  location = {Campus, 4 Crinan St, London N1 9xw, England},
-  publisher = {Bmc},
-  volume = {25},
-  number = {1},
-  year = {2024},
-  issn = {1474-760X},
-  eissn = {1465-6906},
-}
-```
-```
-@article {Agrawal2024.09.08.611848,
-  author = {Agrawal, Ankit and Thomann, Stefan and Basu, Sukanya and Gr{\"u}n, Dominic},
-  title = {NiCo Identifies Extrinsic Drivers of Cell State Modulation by Niche Covariation Analysis},
-  elocation-id = {2024.09.08.611848},
-  year = {2024},
-  doi = {10.1101/2024.09.08.611848},
-  publisher = {Cold Spring Harbor Laboratory},
-  journal = {bioRxiv}
-}
-```
