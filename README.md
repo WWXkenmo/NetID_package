@@ -63,17 +63,5 @@ devtools::install_github("aet21/SCENT")
   eissn = {1465-6906},
 }
 ```
-```
-@article {Agrawal2024.09.08.611848,
-  author = {Agrawal, Ankit and Thomann, Stefan and Basu, Sukanya and Gr{\"u}n, Dominic},
-  title = {NiCo Identifies Extrinsic Drivers of Cell State Modulation by Niche Covariation Analysis},
-  elocation-id = {2024.09.08.611848},
-  year = {2024},
-  doi = {10.1101/2024.09.08.611848},
-  publisher = {Cold Spring Harbor Laboratory},
-  journal = {bioRxiv}
-}
-```
-
 
 
