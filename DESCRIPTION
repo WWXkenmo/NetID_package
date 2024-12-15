@@ -2,7 +2,7 @@ Package: NetID
 Type: Package
 Title: A Meta-cell Base Method to Infer Fate Specific Gene Regulatory
         Network from Single Cell Gene Expression Data
-Version: 0.1.1
+Version: 0.1.2
 biocViews:
 Imports: Matrix, lmtest, glmnet, RobustRankAggreg, irlba, rsvd,
         reticulate, Seurat, Hmisc, mclust, pracma, doParallel, doRNG,
@@ -16,5 +16,5 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 RoxygenNote: 7.3.2
 NeedsCompilation: no
-Packaged: 2024-12-01 17:39:24 UTC; weixu.wang
+Packaged: 2024-12-15 21:33:02 UTC; weixu.wang
 Depends: R (>= 3.5.0)
