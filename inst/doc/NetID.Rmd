@@ -195,6 +195,14 @@ dyn.out <- RunNetID(sce,
                     velo=FALSE)
 ```
 
+We note that the `FateDynamic` function provides a preliminary estimation of cell fate probabilities. However, accurate cell fate estimation relies on further refinements and the incorporation of prior information. If users have their own cell fate probability matrix (`fate_prob`) and `pseudotime`, they can directly plug in these values using the following function.
+
+```{r Plugin cell fate, eval=FALSE, echo=TRUE, warning=FALSE,message=FALSE}
+dyn.out$LineageClass <- LineageClassifer(fate_prob, maxState = 10, cut_off = 0)
+dyn.out$pseudotime <- pseudotime
+dyn.out$fate_prob <- fate_prob # cell fate probability matrix
+```
+
 NetID classifies the cells based on the fate probability matrix using a Gaussian Mixture Model. Next, we compute the lineage fate probability fold change to assign each cluster to a specific lineage. To visualize the cell fate probability in a PCA 2D space, the following function can be utilized:
 
 ```{r plot cell fate probability, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE}

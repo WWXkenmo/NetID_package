@@ -113,6 +113,11 @@ dyn.out <- RunNetID(sce,
                     dynamicInfer = TRUE,
                     velo=FALSE)
 
+## ----Plugin cell fate, eval=FALSE, echo=TRUE, warning=FALSE,message=FALSE-----
+#  dyn.out$LineageClass <- LineageClassifer(fate_prob, maxState = 10, cut_off = 0)
+#  dyn.out$pseudotime <- pseudotime
+#  dyn.out$fate_prob <- fate_prob # cell fate probability matrix
+
 ## ----plot cell fate probability, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE----
 ## load basis information
 dyn.out$basis <- reducedDim(sce, "PCA")[,c(1,2)]

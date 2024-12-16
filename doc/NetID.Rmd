@@ -195,7 +195,7 @@ dyn.out <- RunNetID(sce,
                     velo=FALSE)
 ```
 
-We should note that the `FateDynamic` function provides a preliminary estimation of cell fate probabilities. However, accurate cell fate estimation relies on further refinements and the incorporation of prior information. If users have their own cell fate probability matrix (`fate_prob`) and `pseudotime`, they can directly plug in these values using the following function.
+We note that the `FateDynamic` function provides a preliminary estimation of cell fate probabilities. However, accurate cell fate estimation relies on further refinements and the incorporation of prior information. If users have their own cell fate probability matrix (`fate_prob`) and `pseudotime`, they can directly plug in these values using the following function.
 
 ```{r Plugin cell fate, eval=FALSE, echo=TRUE, warning=FALSE,message=FALSE}
 dyn.out$LineageClass <- LineageClassifer(fate_prob, maxState = 10, cut_off = 0)
