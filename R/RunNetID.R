@@ -265,11 +265,11 @@
         }
         cat("Classify lineage for palantir fate prob...\n")
         if (ncol(fate_prob) == 1) {
-            LineageClass <- LineageClassifer(fate_prob, maxState = maxState, 
+            LineageClass <- LineageClassifier(fate_prob, maxState = maxState, 
                 cut_off = cut_off)
         }
         else {
-            LineageClass <- LineageClassifer(fate_prob, maxState = maxState, 
+            LineageClass <- LineageClassifier(fate_prob, maxState = maxState, 
                 cut_off = cut_off)
         }
         if (velo) {

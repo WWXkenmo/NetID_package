@@ -133,7 +133,7 @@ head(fate_prob)
 head(pseudotime)
 
 ## ----Plugin cell fate, eval=FALSE, echo=TRUE, warning=FALSE,message=FALSE-----
-#  dyn.out$LineageClass <- LineageClassifer(fate_prob, maxState = 10, cut_off = 0)
+#  dyn.out$LineageClass <- LineageClassifier(fate_prob, maxState = 10, cut_off = 0)
 #  dyn.out$pseudotime <- pseudotime
 #  dyn.out$fate_prob <- fate_prob # cell fate probability matrix
 
