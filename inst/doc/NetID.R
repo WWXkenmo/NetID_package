@@ -113,6 +113,25 @@ dyn.out <- RunNetID(sce,
                     dynamicInfer = TRUE,
                     velo=FALSE)
 
+## ----load fate probability and pseudotime, echo=FALSE, message=FALSE, warning=FALSE----
+anndata <- reticulate::import("anndata", convert = FALSE)
+ad = anndata$read_h5ad("./output/FateRes.h5ad")
+fate_prob <- reticulate::py_to_r(ad$obs)
+ID <- colnames(fate_prob)[-ncol(fate_prob)]
+barcode <- rownames(fate_prob)
+fate_prob <- as.matrix(fate_prob[, -ncol(fate_prob)])
+rownames(fate_prob) <- barcode
+colnames(fate_prob) <- ID
+
+pseudotime <- reticulate::py_to_r(ad$obs)$pseudotime
+names(pseudotime) <- rownames(reticulate::py_to_r(ad$obs))
+
+## ----show cell fate, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE--------
+head(fate_prob)
+
+## ----show pseudotime, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE-------
+head(pseudotime)
+
 ## ----Plugin cell fate, eval=FALSE, echo=TRUE, warning=FALSE,message=FALSE-----
 #  dyn.out$LineageClass <- LineageClassifer(fate_prob, maxState = 10, cut_off = 0)
 #  dyn.out$pseudotime <- pseudotime

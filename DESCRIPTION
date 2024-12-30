@@ -16,5 +16,5 @@ License: MIT + file LICENSE
 Encoding: UTF-8
 RoxygenNote: 7.3.2
 NeedsCompilation: no
-Packaged: 2024-12-16 01:04:56 UTC; weixu.wang
+Packaged: 2024-12-30 13:48:51 UTC; weixu.wang
 Depends: R (>= 3.5.0)

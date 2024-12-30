@@ -197,6 +197,33 @@ dyn.out <- RunNetID(sce,
 
 We note that the `FateDynamic` function provides a preliminary estimation of cell fate probabilities. However, accurate cell fate estimation relies on further refinements and the incorporation of prior information. If users have their own cell fate probability matrix (`fate_prob`) and `pseudotime`, they can directly plug in these values using the following function.
 
+```{r load fate probability and pseudotime, echo=FALSE, message=FALSE, warning=FALSE}
+anndata <- reticulate::import("anndata", convert = FALSE)
+ad = anndata$read_h5ad("./output/FateRes.h5ad")
+fate_prob <- reticulate::py_to_r(ad$obs)
+ID <- colnames(fate_prob)[-ncol(fate_prob)]
+barcode <- rownames(fate_prob)
+fate_prob <- as.matrix(fate_prob[, -ncol(fate_prob)])
+rownames(fate_prob) <- barcode
+colnames(fate_prob) <- ID
+
+pseudotime <- reticulate::py_to_r(ad$obs)$pseudotime
+names(pseudotime) <- rownames(reticulate::py_to_r(ad$obs))
+```
+
+`fate_prob` is a cell fate probability matrix with rows are cells, columns are cell fates, and values are the probabilities of each cell being assigned to each fate. This cell fate probability matrix can be inferred via `cellrank` or `palantir`.
+
+```{r show cell fate, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE}
+head(fate_prob)
+```
+
+`pseudotime` is an inferred measure of progression through a biological process, such as differentiation or cell cycle.
+```{r show pseudotime, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE}
+head(pseudotime)
+```
+
+Then, we assigned cells to specific cell fates based on `fate_prob` using the `LineageClassifier` function, and plugged it into the object `dyn.out`.
+
 ```{r Plugin cell fate, eval=FALSE, echo=TRUE, warning=FALSE,message=FALSE}
 dyn.out$LineageClass <- LineageClassifer(fate_prob, maxState = 10, cut_off = 0)
 dyn.out$pseudotime <- pseudotime
