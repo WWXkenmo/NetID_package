@@ -98,7 +98,7 @@ names(dyn.out)
 
 # Perform pruning on Shared Nearest-neighbor (SNN) graph
 
-NetID also accepts a Seurat object as input and employs the SNN graph for pruning and aggregation. To begin, we can construct the Seurat object.
+NetID also accepts a Seurat object as input and utilizes the SNN graph for pruning and aggregation. Compared to the raw KNN graph, the SNN graph can provide a clearer neighbor graphs. To begin, we first construct the Seurat object. This dataset includes both spliced and unspliced readouts; for building the GRN, we used the spliced readout. Users can also specify the gene read count layer they wish to use for constructing the GRN.
 
 ```{r Build Seurat object, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE}
 library(SummarizedExperiment)
@@ -206,9 +206,6 @@ barcode <- rownames(fate_prob)
 fate_prob <- as.matrix(fate_prob[, -ncol(fate_prob)])
 rownames(fate_prob) <- barcode
 colnames(fate_prob) <- ID
-
-pseudotime <- reticulate::py_to_r(ad$obs)$pseudotime
-names(pseudotime) <- rownames(reticulate::py_to_r(ad$obs))
 ```
 
 `fate_prob` is a cell fate probability matrix with cells as rows, columns as cell fates; values are the probabilities of each cell being assigned to each fate. This cell fate probability matrix can be inferred via `cellrank`, `palantir`, or any other method, e.g., `FateID`.
@@ -217,18 +214,25 @@ names(pseudotime) <- rownames(reticulate::py_to_r(ad$obs))
 head(fate_prob)
 ```
 
-`pseudotime` is an inferred measure of progression through a biological process, such as differentiation or cell cycle. This vector contains a numerical pseudotime value for every cell.
-```{r show pseudotime, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE}
-head(pseudotime)
-```
-
-Then, cells are assigned to specific cell fates based on `fate_prob` using the `LineageClassifier` function, and plugged it into the object `dyn.out`, along with `fate_prob` and `pseudotime` .
+Then, cells are assigned to specific cell fates based on `fate_prob` using the `LineageClassifier` function, and plugged it into the object `dyn.out`, along with `fate_prob`. The whole procedures are shown as follow:
 
 ```{r Plugin cell fate, eval=FALSE, echo=TRUE, warning=FALSE,message=FALSE}
+## Run NetID
+dyn.out <- RunNetID(sce,
+                    regulators = TF[,1], 
+                    targets = TF[,1],
+                    netID_params =
+                    list(normalize=FALSE,
+                         sketch.method = "geosketch"), 
+                    dynamicInfer = FALSE,
+                    velo=FALSE)
+
+## Inject dynamic information
 dyn.out$LineageClass <- LineageClassifier(fate_prob, maxState = 10, cut_off = 0)
-dyn.out$pseudotime <- pseudotime
 dyn.out$fate_prob <- fate_prob # cell fate probability matrix
 ```
+
+These step can be used to skip `FateDynamic` step. and the output can be directly used by the next step (`FateCausal`).
 
 NetID classifies the cells based on the fate probability matrix using a Gaussian Mixture Model. Next, we compute the lineage fate probability fold change to assign each cluster to a specific lineage. To visualize the cell fate probability in a PCA 2D space, the following function can be utilized:
 
@@ -238,6 +242,9 @@ dyn.out$basis <- reducedDim(sce, "PCA")[,c(1,2)]
 
 ## For SCseq, e.g.
 ## dyn.out$basis <- sce@umap
+
+## For Seurat, e.g.
+## dyn.out$basis <- Se@reductions$umap_spliced@cell.embeddings
 
 library(cowplot)
 p1 = plotFateProb(dyn.out,basis=dyn.out$basis,basis_name = "PCA",

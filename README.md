@@ -1,4 +1,4 @@
-# NetID
+# NetID_package
 A scalable method to infer fate specific gene regulatory network from single cell gene expression data
 
 <img src="https://github.com/WWXkenmo/NetID_package/blob/figures/figures/Concept_fig1.png" alt="NetID" width="600" />
@@ -46,20 +46,3 @@ pip install numpy==1.23.5
 #### install cytotrace and scent to determine the root cell
 ```
 devtools::install_github("aet21/SCENT")
-```
-
-### Citation
-```
-@article{PUSH:72058,
-  author = {Wang, W. and Wang, Y. and Lyu, R. and Gr{\"u}n, D.},
-  title = {{Scalable identification of lineage-specific gene regulatory networks from metacells with NetID.}},
-  journal = {Genome Biol.},
-  location = {Campus, 4 Crinan St, London N1 9xw, England},
-  publisher = {Bmc},
-  volume = {25},
-  number = {1},
-  year = {2024},
-  issn = {1474-760X},
-  eissn = {1465-6906},
-}
-```

@@ -109,8 +109,8 @@ def terminal_index(ad,label,terminal_state, n_pc = 20):
         cell_index += list(compress(indices,dist == np.min(dist)))
         
     states = pd.Series(
-        cell_index,
-        index=terminal_state,
+        terminal_state,
+        index=cell_index,
     )
     
     return states

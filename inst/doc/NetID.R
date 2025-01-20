@@ -123,18 +123,22 @@ fate_prob <- as.matrix(fate_prob[, -ncol(fate_prob)])
 rownames(fate_prob) <- barcode
 colnames(fate_prob) <- ID
 
-pseudotime <- reticulate::py_to_r(ad$obs)$pseudotime
-names(pseudotime) <- rownames(reticulate::py_to_r(ad$obs))
-
 ## ----show cell fate, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE--------
 head(fate_prob)
 
-## ----show pseudotime, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE-------
-head(pseudotime)
-
 ## ----Plugin cell fate, eval=FALSE, echo=TRUE, warning=FALSE,message=FALSE-----
+#  ## Run NetID
+#  dyn.out <- RunNetID(sce,
+#                      regulators = TF[,1],
+#                      targets = TF[,1],
+#                      netID_params =
+#                      list(normalize=FALSE,
+#                           sketch.method = "geosketch"),
+#                      dynamicInfer = FALSE,
+#                      velo=FALSE)
+#  
+#  ## Inject dynamic information
 #  dyn.out$LineageClass <- LineageClassifier(fate_prob, maxState = 10, cut_off = 0)
-#  dyn.out$pseudotime <- pseudotime
 #  dyn.out$fate_prob <- fate_prob # cell fate probability matrix
 
 ## ----plot cell fate probability, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE----
@@ -143,6 +147,9 @@ dyn.out$basis <- reducedDim(sce, "PCA")[,c(1,2)]
 
 ## For SCseq, e.g.
 ## dyn.out$basis <- sce@umap
+
+## For Seurat, e.g.
+## dyn.out$basis <- Se@reductions$umap_spliced@cell.embeddings
 
 library(cowplot)
 p1 = plotFateProb(dyn.out,basis=dyn.out$basis,basis_name = "PCA",

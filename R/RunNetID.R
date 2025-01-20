@@ -279,7 +279,7 @@
                 LineageClass_velo[[colnames(fate_prob_velo)]] <- rownames(fate_prob_velo)
             }
             else {
-                LineageClass_velo <- LineageClassifer(fate_prob_velo, 
+                LineageClass_velo <- LineageClassifier(fate_prob_velo, 
                   maxState = maxState)
             }
         }

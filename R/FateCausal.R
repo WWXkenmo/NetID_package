@@ -68,7 +68,7 @@ FateCausal <- function(dyn.out,L=30,alpha = 0,lambda=100,cutoff=0.25,weight=0.2,
   #velo_m <- velo_m[apply(velo_m,1,function(x){sum(is.nan(x))})==0,]
   fate_prob <- as.matrix(dyn.out$fate_prob)
   if(fate_method == "cellrank") fate_prob_velo <- as.matrix(dyn.out$fate_prob_velo)
-  pseudotime <- dyn.out$pseudotime
+  #pseudotime <- dyn.out$pseudotime
   metaCells <- which(rownames(fate_prob) %in% colnames(dyn.out$skeleton$metaExp))
   metaExp <- dyn.out$skeleton$metaExp
 
