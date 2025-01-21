@@ -1,10 +1,8 @@
 ---
 title: "A brief tutorial for estimating cell fate specific GRN using NetID"
 author:
-- name: "Weixu Wang<sup>1</sup> and Dominic Grün<sup>2</sup>"
-  affiliation: 
-  - "<sup>1</sup> Institute of Computational Biology, Helmholtz Center Munich, Munich, Germany"
-  - "<sup>2</sup> Würzburg Institute of Systems Immunology, Julius‐Maximilians-Universität Würzburg, Würzburg, Germany"
+  - Weixu Wang, Institute of Computational Biology, Helmholtz Center Munich, Munich, Germany
+  - Dominic Grün, Würzburg Institute of Systems Immunology, Julius‐Maximilians-Universität Würzburg, Würzburg, Germany
 date: "`r Sys.Date()`"
 package: NetID
 output:
