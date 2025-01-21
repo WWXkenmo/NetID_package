@@ -113,7 +113,7 @@ dyn.out <- RunNetID(sce,
                     dynamicInfer = TRUE,
                     velo=FALSE)
 
-## ----load fate probability and pseudotime, echo=FALSE, message=FALSE, warning=FALSE----
+## ----load fate probability, echo=FALSE, message=FALSE, warning=FALSE----------
 anndata <- reticulate::import("anndata", convert = FALSE)
 ad = anndata$read_h5ad("./output/FateRes.h5ad")
 fate_prob <- reticulate::py_to_r(ad$obs)

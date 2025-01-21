@@ -1,10 +1,10 @@
 ---
 title: "A brief tutorial for estimating cell fate specific GRN using NetID"
 author:
-- name: "Weixu Wang"
+- name: "Weixu Wang<sup>1</sup> and Dominic Grün<sup>2</sup>"
   affiliation: 
-  - Institute of Computational Biology, Helmholtz Center Munich, Munich, Germany
-  - Human Phenome Institute, Fudan University, Shanghai, China
+  - "<sup>1</sup> Institute of Computational Biology, Helmholtz Center Munich, Munich, Germany"
+  - "<sup>2</sup> Würzburg Institute of Systems Immunology, Julius‐Maximilians-Universität Würzburg, Würzburg, Germany"
 date: "`r Sys.Date()`"
 package: NetID
 output:
@@ -98,7 +98,7 @@ names(dyn.out)
 
 # Perform pruning on Shared Nearest-neighbor (SNN) graph
 
-NetID also accepts a Seurat object as input and utilizes the SNN graph for pruning and aggregation. Compared to the raw KNN graph, the SNN graph can provide a clearer neighbor graphs. To begin, we first construct the Seurat object. This dataset includes both spliced and unspliced readouts; for building the GRN, we used the spliced readout. Users can also specify the gene read count layer they wish to use for constructing the GRN.
+NetID also accepts a Seurat object as input and utilizes the SNN graph for pruning and aggregation. Compared to the raw KNN graph, the SNN graph can provide a clearer neighbor graph. To begin, we first construct the Seurat object. This dataset includes both spliced and unspliced readouts; for building the GRN, we used the spliced readout. Users can also specify the gene read count layer they wish to use for constructing the GRN.
 
 ```{r Build Seurat object, eval=TRUE, echo=TRUE, warning=FALSE,message=FALSE}
 library(SummarizedExperiment)
@@ -195,9 +195,9 @@ dyn.out <- RunNetID(sce,
                     velo=FALSE)
 ```
 
-We note that the `FateDynamic` function provides a preliminary estimation of cell fate probabilities. However, accurate cell fate estimation relies on further refinements and the incorporation of prior information. If users have their own cell fate probability matrix (`fate_prob`) and `pseudotime`, they can directly plug in these values to update the `dyn.out` object using the `LineageClassifier` function.
+We note that the `FateDynamic` function provides a preliminary estimation of cell fate probabilities. However, accurate cell fate estimation relies on further refinements and the incorporation of prior information. If users wish to use their own cell fate probability matrix (`fate_prob`), they can directly plug in these values to update the `dyn.out` object using the `LineageClassifier` function.
 
-```{r load fate probability and pseudotime, echo=FALSE, message=FALSE, warning=FALSE}
+```{r load fate probability, echo=FALSE, message=FALSE, warning=FALSE}
 anndata <- reticulate::import("anndata", convert = FALSE)
 ad = anndata$read_h5ad("./output/FateRes.h5ad")
 fate_prob <- reticulate::py_to_r(ad$obs)
@@ -214,7 +214,7 @@ colnames(fate_prob) <- ID
 head(fate_prob)
 ```
 
-Then, cells are assigned to specific cell fates based on `fate_prob` using the `LineageClassifier` function, and plugged it into the object `dyn.out`, along with `fate_prob`. The whole procedures are shown as follow:
+Then, cells are assigned to specific cell fates based on `fate_prob` using the `LineageClassifier` function, and plugged into the object `dyn.out`, along with `fate_prob`. The whole procedure is shown below:
 
 ```{r Plugin cell fate, eval=FALSE, echo=TRUE, warning=FALSE,message=FALSE}
 ## Run NetID
@@ -232,7 +232,7 @@ dyn.out$LineageClass <- LineageClassifier(fate_prob, maxState = 10, cut_off = 0)
 dyn.out$fate_prob <- fate_prob # cell fate probability matrix
 ```
 
-These step can be used to skip `FateDynamic` step. and the output can be directly used by the next step (`FateCausal`).
+These steps can be used to skip the `FateDynamic` step. and the output can directly be used for the next step (`FateCausal`).
 
 NetID classifies the cells based on the fate probability matrix using a Gaussian Mixture Model. Next, we compute the lineage fate probability fold change to assign each cluster to a specific lineage. To visualize the cell fate probability in a PCA 2D space, the following function can be utilized:
 
